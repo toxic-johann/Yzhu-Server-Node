@@ -6,7 +6,7 @@ class MainHandler(tornado.web.RequestHandler):
     def git(*args):
         return subprocess.check_call(['git'] + list(args))
 
-    def get(self):
+    def post(self):
         self.write("receive")
         git('pull')
 
