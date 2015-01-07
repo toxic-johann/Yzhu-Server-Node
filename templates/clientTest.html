@@ -1,0 +1,82 @@
+<!Doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Primus Rooms Test</title>
+    <script src="/primus/primus.js"></script>
+    <script src="/lib/Wrox.js"></script>
+  </head>
+  <body>
+    <h1>{{ pagename|title }}</h1>
+    <input type="text" id="ask" name="ask">
+    <input type="button" id="sendButton" value="talk">
+    <form id="testForm" method="post" enctype="multipart/form-data" action="/upload" name="fileinfo">
+      <input type="file" id='file' name='uploadFile'>
+      <input type="text" id="testtext" name="testtext" value="text">
+      <input type="submit">
+    </form>
+    <input type="button" id="postButton" value="post">
+    <div id="ans"></div>
+    <script>
+      var myPrimus={};
+
+      function client(room_name) {
+
+        myPrimus.primus = new Primus.connect('ws://localhost:3333');
+
+        myPrimus.primus.write({action:'join',room:room_name});
+
+        myPrimus.primus.on('data',function(message){
+          console.log("this is the "+message);
+          document.getElementById('ans').innerHtml = message;
+        });
+      }
+
+      function send () {
+        // body...
+        var message = document.getElementById('ask').value;
+        console.log(message);
+        myPrimus.primus.write({room:myPrimus.room,msg:message});
+      }
+
+      function postSendHandler () {
+        // body...
+
+        var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+        onProgress = function(e){
+          if(e.lengthComputable){
+            //on the progess time
+            var percentComplere = (e.loaded/e.total)*100;
+          }
+        },
+        onReady = function(e){
+          //ready state
+          console.log(xmlhttp.responseText);
+        },
+        onError = function(err){
+          console.log(err);
+          //output the error
+        };
+
+        xmlhttp.open("POST","/image",true);
+        var form = document.forms.namedItem("fileinfo")
+        var formData = new FormData(form);
+        formData.append("foo","bar");
+        xmlhttp.addEventListener('error', onError, false);
+        xmlhttp.addEventListener('progress', onProgress, false);
+        xmlhttp.send(formData);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+        
+      }
+
+      window.onload = function(){
+        // Set one more client
+        EventUtil = Wrox.ProJS.EventUtil;
+        client('room1');
+        myPrimus.room= 'room1';
+        EventUtil.addHandler(document.getElementById("sendButton"),'click',send);
+        EventUtil.addHandler(document.getElementById("postButton"),'click',postSendHandler);
+      }
+    </script>
+  </body>
+</html>
