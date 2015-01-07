@@ -22,7 +22,7 @@
 
       function client(room_name) {
 
-        myPrimus.primus = new Primus.connect('ws://localhost:3333');
+        myPrimus.primus = new Primus.connect('ws://120.24.208.130:3333');
 
         myPrimus.primus.write({action:'join',room:room_name});
 
