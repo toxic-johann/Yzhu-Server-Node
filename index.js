@@ -1,7 +1,6 @@
 var server  = require("./service/server")  ;  
 var router = require("./service/route");  
 var requestHandlers = require("./service/requestHandlers"); 
-//one more stupid test
   
 //创建handle映射类，就是将请求路径和具体的action函数进行映射关联
   
