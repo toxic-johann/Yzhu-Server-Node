@@ -8,7 +8,7 @@ class MainHandler(tornado.web.RequestHandler):
 
     def post(self):
         self.write("receive")
-        git('pull')
+        self.git('pull')
 
 application = tornado.web.Application([
     (r"/", MainHandler),
