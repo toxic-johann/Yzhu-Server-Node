@@ -3,12 +3,11 @@ import tornado.ioloop
 import tornado.web
 
 class MainHandler(tornado.web.RequestHandler):
-    def git(*args):
-        return subprocess.check_call(['git'] + list(args))
-
     def post(self):
-        self.write("receive")
-        self.git('pull')
+        def git(*args):
+            return subprocess.check_call(['git'] + list(args))\
+
+        git('pull')
 
 application = tornado.web.Application([
     (r"/", MainHandler),
