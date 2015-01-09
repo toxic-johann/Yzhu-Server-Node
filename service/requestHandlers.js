@@ -10,7 +10,8 @@ utils = require("./utils.js"),
 formidable = require("formidable"),
 querystring = require("querystring"),
 util = require("util"),
-mongoose = require("mongoose");
+mongoose = require("mongoose"),
+databaseHandlers = require("./databaseHandlers.js");
 
 function start (request,response,pathname) {
 	// body...
@@ -74,53 +75,14 @@ function image (request,response,pathname) {
 }
 
 function dbTest(request,response,pathname){
-	//use to test the mongodb
-	//this code is study from 
-	//http://www.html-js.com/article/1697
+	//test the mysql database
 
-	var db;
-	db = mongoose.connection;
-
-	db.on('error',console.error);
-	db.once('open',function(){
-		//create the module and schema here
-
-		var movieSchema,MovieModel,thor;
-
-		//we will use moveSchema as a struct
-		//to create the movie model
-		//at the same time
-		//it will create a movie mongodb document
-		movieSchema = new mongoose.Schema({
-			title:{type:String},
-			rating:String,
-			releasYear:Number,
-			hasCreditCookie:Boolean
-		});
-
-		Movie = db.model('Movie',movieSchema);
-		//after it was claim
-		//you can find the model by db.model('movie')
-
-		thor = new Movie({
-			title:"Thor",
-			rating:'PG-13',
-			releasYear:'2011',
-			//though here we use a string
-			//the mongoose will help us translate
-			hasCreditCookie:true
-		});
-
-		thor.save(function(err,thor){
-			if(err){
-				return console.log(err);
-			}
-			console.dir(thor);
-		});
-		//you can see the new movie
+	databaseHandlers.dbTestHandler(function (data) {
+		// show the answer
+		response.writeHead(200,{"Content-Type":"text/plain"});
+    	response.write("the soulution is "+data);
+    	response.end();
 	});
-
-	mongoose.connect('mongodb://localhost/test');
 
 	return("Request handler 'db-test' was called");
 }
