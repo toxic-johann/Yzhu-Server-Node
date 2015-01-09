@@ -10,6 +10,11 @@ var pool = mysql.createPool({
 	password : dbInfo.password
 });
 
+//if it need to wait output it.
+pool.on('enqueue', function () {
+  console.log('Waiting for available connection slot');
+});
+
 function dbTestHandler (callback) {
 	// here is just to test the mysql server
 
@@ -24,5 +29,19 @@ function dbTestHandler (callback) {
 		connection.release();
 	});
 };
+
+function getAllUser (callback) {
+	// Set to see the user id
+	pool.getConnection(function (err,connection) {
+		// body...
+		connection.query('select * from event', function(err, rows, fields) {
+			if (err) throw err;
+			console.log('The solution is: ', rows);
+			callback(rows);
+		});
+
+		connection.release();
+	});
+}
 
 exports.dbTestHandler = dbTestHandler;
