@@ -45,3 +45,6 @@ Temporary Items
 #node js modules
 #ignore it because it depends on environment
 node_modules/
+
+#config on the local file
+conf/localConf.js

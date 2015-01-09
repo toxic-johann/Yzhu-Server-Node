@@ -1,0 +1,62 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'D:\\nodejs\\node\\\\node.exe',
+1 verbose cli   'D:\\nodejs\\node\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'install',
+1 verbose cli   'felixge/node-mysql' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.34
+4 verbose node symlink D:\nodejs\node\\node.exe
+5 warn package.json @ No repository field.
+6 verbose readDependencies using package.json deps
+7 verbose cache add [ 'felixge/node-mysql', null ]
+8 verbose cache add name=undefined spec="felixge/node-mysql" args=["felixge/node-mysql",null]
+9 verbose parsed url { protocol: null,
+9 verbose parsed url   slashes: null,
+9 verbose parsed url   auth: null,
+9 verbose parsed url   host: null,
+9 verbose parsed url   port: null,
+9 verbose parsed url   hostname: null,
+9 verbose parsed url   hash: null,
+9 verbose parsed url   search: null,
+9 verbose parsed url   query: null,
+9 verbose parsed url   pathname: 'felixge/node-mysql',
+9 verbose parsed url   path: 'felixge/node-mysql',
+9 verbose parsed url   href: 'felixge/node-mysql' }
+10 silly lockFile 4f4f7be1-felixge-node-mysql felixge/node-mysql
+11 verbose lock felixge/node-mysql C:\Users\asus\AppData\Roaming\npm-cache\4f4f7be1-felixge-node-mysql.lock
+12 info maybeGithub Attempting felixge/node-mysql from git://github.com/felixge/node-mysql
+13 silly lockFile a6c4cfee-it-github-com-felixge-node-mysql git://github.com/felixge/node-mysql
+14 verbose lock git://github.com/felixge/node-mysql C:\Users\asus\AppData\Roaming\npm-cache\a6c4cfee-it-github-com-felixge-node-mysql.lock
+15 verbose addRemoteGit [ 'git://github.com/felixge/node-mysql', 'master' ]
+16 warn `git config --get remote.origin.url` returned wrong result (git://github.com/felixge/node-mysql) undefined
+16 warn `git config --get remote.origin.url` returned wrong result (git://github.com/felixge/node-mysql) undefined
+17 verbose git clone git://github.com/felixge/node-mysql undefined
+17 verbose git clone git://github.com/felixge/node-mysql undefined
+18 silly lockFile a6c4cfee-it-github-com-felixge-node-mysql git://github.com/felixge/node-mysql
+19 silly lockFile a6c4cfee-it-github-com-felixge-node-mysql git://github.com/felixge/node-mysql
+20 info maybeGithub Attempting felixge/node-mysql from git+ssh://git@github.com:felixge/node-mysql
+21 silly lockFile 246b2140-it-github-com-felixge-node-mysql git@github.com:felixge/node-mysql
+22 verbose lock git@github.com:felixge/node-mysql C:\Users\asus\AppData\Roaming\npm-cache\246b2140-it-github-com-felixge-node-mysql.lock
+23 verbose addRemoteGit [ 'git@github.com:felixge/node-mysql', 'master' ]
+24 warn `git config --get remote.origin.url` returned wrong result (git@github.com:felixge/node-mysql) undefined
+24 warn `git config --get remote.origin.url` returned wrong result (git@github.com:felixge/node-mysql) undefined
+25 error git clone git@github.com:felixge/node-mysql undefined
+25 error git clone git@github.com:felixge/node-mysql undefined
+26 silly lockFile 246b2140-it-github-com-felixge-node-mysql git@github.com:felixge/node-mysql
+27 silly lockFile 246b2140-it-github-com-felixge-node-mysql git@github.com:felixge/node-mysql
+28 silly lockFile 4f4f7be1-felixge-node-mysql felixge/node-mysql
+29 silly lockFile 4f4f7be1-felixge-node-mysql felixge/node-mysql
+30 error addLocal Could not install felixge/node-mysql
+31 error Error: ENOENT, stat 'D:\GitHub\workspace\Yzhu-Server-Node\felixge\node-mysql'
+32 error If you need help, you may report this *entire* log,
+32 error including the npm and node versions, at:
+32 error     <http://github.com/npm/npm/issues>
+33 error System Windows_NT 6.2.9200
+34 error command "D:\\nodejs\\node\\\\node.exe" "D:\\nodejs\\node\\node_modules\\npm\\bin\\npm-cli.js" "install" "felixge/node-mysql"
+35 error cwd D:\GitHub\workspace\Yzhu-Server-Node
+36 error node -v v0.10.34
+37 error npm -v 1.4.28
+38 error path D:\GitHub\workspace\Yzhu-Server-Node\felixge\node-mysql
+39 error code ENOENT
+40 error errno 34
+41 verbose exit [ 34, true ]
