@@ -7,7 +7,8 @@ var pool = mysql.createPool({
 	connectionLimit:10,
 	host : dbInfo.host,
 	user : dbInfo.user,
-	password : dbInfo.password
+	password : dbInfo.password,
+	database : dbInfo.dbname
 });
 
 //if it need to wait output it.
