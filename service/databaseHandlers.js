@@ -45,3 +45,4 @@ function getAllUser (callback) {
 }
 
 exports.dbTestHandler = dbTestHandler;
+exports.getAllUser = getAllUser;

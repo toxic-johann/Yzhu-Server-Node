@@ -77,7 +77,7 @@ function image (request,response,pathname) {
 function dbTest(request,response,pathname){
 	//test the mysql database
 
-	databaseHandlers.dbTestHandler(function (data) {
+	databaseHandlers.getAllUser(function (data) {
 		// show the answer
 		response.writeHead(200,{"Content-Type":"text/plain"});
     	response.write("the soulution is "+data);
