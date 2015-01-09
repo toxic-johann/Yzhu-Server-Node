@@ -3,7 +3,8 @@
 var mysql = require('mysql'),
 dbInfo = require('../conf/localConf.js').database;
 
-var connection = mysql.createConnection({
+var pool = mysql.createPool({
+	connectionLimit:10,
 	host : dbInfo.host,
 	user : dbInfo.user,
 	password : dbInfo.password
@@ -11,15 +12,17 @@ var connection = mysql.createConnection({
 
 function dbTestHandler (callback) {
 	// here is just to test the mysql server
-	connection.connect();
 
-	connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-		if (err) throw err;
-		console.log('The solution is: ', rows[0].solution);
-		callback(rows[0].solution);
+	pool.getConnection(function (err,connection) {
+		// body...
+		connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
+			if (err) throw err;
+			console.log('The solution is: ', rows[0].solution);
+			callback(rows[0].solution);
+		});
+
+		connection.release();
 	});
-
-	connection.end();
 };
 
 exports.dbTestHandler = dbTestHandler;
