@@ -80,7 +80,7 @@ function dbTest(request,response,pathname){
 	databaseHandlers.getAllUser(function (data) {
 		// show the answer
 		response.writeHead(200,{"Content-Type":"text/plain"});
-    	response.write("the soulution is "+JSON.parse(data));
+    	response.write("the soulution is "+JSON.stringify(data));
     	response.end();
 	});
 
