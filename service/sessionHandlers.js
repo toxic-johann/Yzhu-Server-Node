@@ -77,7 +77,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 		for(var key in sessions){
 			var session = sessions[key];
 			if(session.doDestroy){
-				deleteSession(session,function (state,error_code) {
+				deleteSession(session.sessionId,function (state,error_code) {
 				if(!state){
 					console.log(error_code);
 				} else {
@@ -85,7 +85,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 				}
 			});
 			} else if(now - session.getTime() > maxAge){
-				deleteSession(session,function (state,error_code) {
+				deleteSession(session.sessionId,function (state,error_code) {
 				if(!state){
 					console.log(error_code);
 				} else {
