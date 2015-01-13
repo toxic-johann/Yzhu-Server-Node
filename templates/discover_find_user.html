@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Discover find user</title>
+</head>
+<body>
+	<input type="button" id="areaSend" value="提交范围">
+    <div id="show"></div>
+	<script src="/lib/Wrox.js"></script>
+	<script>
+		function sendAreaHandler () {
+        // body...
+
+        var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+        onProgress = function(e){
+          if(e.lengthComputable){
+            //on the progess time
+            var percentComplere = (e.loaded/e.total)*100;
+          }
+        },
+        onReady = function(e){
+          //ready state
+          document.getElementById('show').innerHTML = xmlhttp.responseText;
+        },
+        onError = function(err){
+          console.log(err);
+          //output the error
+        };
+
+        xmlhttp.open("POST","/api/discover/findUser",true);
+        var area ={corner:[
+        	{
+        		longitude:113.38,
+        		latitude:23.0635
+        	},{
+        		longitude:113.398,
+        		latitude:23.055
+        	}],code:440113011202},
+        data = JSON.stringify(area);
+        xmlhttp.addEventListener('error', onError, false);
+        xmlhttp.addEventListener('progress', onProgress, false);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data,function (result) {
+        	// body...
+        	console.log(result);
+        });
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+        
+      }
+
+      window.onload = function(){
+        // Set one more client
+        EventUtil = Wrox.ProJS.EventUtil;
+        EventUtil.addHandler(document.getElementById("areaSend"),'click',sendAreaHandler);
+      }
+	</script>
+</body>
+</html>

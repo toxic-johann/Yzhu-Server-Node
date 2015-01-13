@@ -7,6 +7,8 @@ var apiHandlers = require("./api/apiHandlers");
   
 var handle = {
 	"/":requestHandlers.start,
+	"/register":requestHandlers.register,
+	"/login":requestHandlers.login,
 	"/start":requestHandlers.start,
 	"/upload":requestHandlers.upload,
 	"/lib":requestHandlers.lib,
@@ -16,7 +18,20 @@ var handle = {
 
 	"forPost":{
 		'/image':requestHandlers.imagePost,
-		'/upload':requestHandlers.uploadPost
+		'/upload':requestHandlers.uploadPost,
+		'/login':requestHandlers.loginPost,
+		'/register':requestHandlers.registerPost
+	},
+
+	"api":{
+		"forPost":{
+			"discover":{
+				"findUser":requestHandlers.findUserInAreaPost
+			}
+		},
+		"discover":{
+			"findUser":requestHandlers.findUserInArea
+		}	
 	}
 };
 console.dir(["handle",handle]);

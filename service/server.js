@@ -46,7 +46,7 @@ function start (route,handle) {
 		//});
 		
 	}
-	var app = express;
+
 	var server = http.createServer(onRequest);
 	//about the primus server
 	var primus = new Primus(server,{transformer:"websockets"});

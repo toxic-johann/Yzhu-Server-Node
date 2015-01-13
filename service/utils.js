@@ -37,3 +37,62 @@ exports.parseRange = function (str,size){
 
 	return {start:start,end:end};
 };
+
+exports.isDataExistNull = function (data) {
+	// judge whether the data is null
+	if(data instanceof Array){
+		//why not use for-in
+		//because for-in will throw error
+		//when it detected null or undefined
+		for(var i = data.length-1;i--;i>=0 ){
+			if(data[i] === '' || data[i] === undefined || data[i] === null){
+				return true;
+			}
+		}
+		return false;
+	} else if (data instanceof Object){
+		for (var sample in data){
+			if(data[sample] === ""){
+				return true;
+			}
+		}
+		return false;
+	} else {
+		if(data === '' || data === undefined || data === null){
+			return true;
+		}
+		return false;
+	}
+}
+
+exports.objectMerge = function (a,b) {
+	// body...
+	var len_a = Object.getOwnPropertyNames(a).length,
+	len_b = Object.getOwnPropertyNames(b).length,
+	result={};
+	if(len_a >= len_b){
+		result = a;
+		for(var prop in b){
+			if(b.hasOwnProperty(prop) && !a.hasOwnProperty(prop)){
+				result[prop] = b[prop];
+			}
+		}
+		return result;
+	} else {
+		return arguments.callee(b,a);
+	}
+}
+
+exports.selectRandomAndUnique = function (object,num) {
+	// random sort the object
+	// then return the upper one
+	if(object.length <= num){
+		return object;
+	}
+	var result=[];
+	object.sort(function () {return 0.5-Math.random();});
+	for(var i=0;i<num;i++){
+		result[i] = object[i];
+	}
+	return result;
+}

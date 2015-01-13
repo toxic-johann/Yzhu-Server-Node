@@ -13,6 +13,24 @@ util = require("util"),
 mongoose = require("mongoose"),
 databaseHandlers = require("./databaseHandlers.js");
 
+function login (request,response,pathname,register) {
+	// body...
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/login.html',{
+		register_state:register || 'Have not registed? try to regist.'
+	}));
+	response.end();
+	return ("Request handler 'login' was called");
+}
+
+function register (request,response,pathnname) {
+	// show the register page
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/register.html'));
+	response.end();
+	return ("Request handler 'register' was called");
+}
+
 function start (request,response,pathname) {
 	// body...
 	response.writeHead(200,{"Content-Type":"text/html"});
@@ -147,6 +165,118 @@ function uploadPost (request,response,pathname) {
     });
 
 	return("POST handler 'image' was called");
+}
+
+//income
+//cellPhone,password
+function loginPost (request,response,pathname) {
+	// handle the login
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function(err,fields,files){
+		//reflect to front
+		databaseHandlers.loginUser(fields.cellPhone,function (state,error_code,result) {
+			if(state){
+				if(!result[0]){
+					console.log('the phone has not been registed');
+				}
+				else{
+					if(result[0].password !== querystring.escape(fields.password)){
+						console.log('the password is wrong');
+					}
+					else{
+						console.log('success');
+						databaseHandlers.setSession()
+					}
+				}
+			}
+			else{
+
+			}
+		});
+	});
+	return ("Post handler 'login' was called");
+}
+
+//income
+//user_name,cellPhone,password
+function registerPost (request,response,pathname) {
+	// handler the register
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		databaseHandlers.registerUser(fields,function (state,error_code) {
+			if(state){
+				login(request,response,pathname,'You have successfully registed.Try login.')
+			} else {
+				if(error_code === 1062){	
+					//dup phone
+					console.log('the cell phone has been registed');
+				} else if(error_code === 1048){
+					//null value
+					console.log('there can not have null value');
+				}
+			}
+		});
+	});
+	return ("Post handler 'register' was called");
+}
+
+//--------------------------------------------
+//api handlers
+//set for mobile phone
+//--------------------------------------------
+
+//income
+//corner or code
+//decide to use corner
+//--------------------
+//output
+//users and their info
+function findUserInAreaPost (request,response,pathname) {
+	// get the corners and parse it
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		databaseHandlers.getUserByCoordinate(fields.corner,function (state,error_code,result) {
+			if(!state){
+				console.log(error_code);
+			} else {
+				result = utils.selectRandomAndUnique(result,25);
+				for(var i=result.length;i--;i>0){
+					(function (j) {
+						// closure
+						//use this method to save i
+						databaseHandlers.getInfoById(result[j].userId,function (state,error_code,row) {
+							// body...
+							if(!state){
+								console.log(error_code);
+							} else {
+								result[j] = utils.objectMerge(result[j],row[0]);
+							}
+							if(j === 0){
+								//finish process
+								response.writeHead(200, {'content-type': 'text/plain'});
+								response.write(result.length+"\n\n");
+								response.end(util.inspect({users:result}));
+							}
+						});
+					}(i));
+				}
+			}
+		});
+	});
+	return ("API Post handler 'find user depends on area in discover' was called");
+}
+
+//income
+function findUserInArea (request,response,pathname) {
+	// body...
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/discover_find_user.html'));
+	response.end();
+	return ("API handler 'find user depends on area in discover' was called");
 }
 
 /*
@@ -284,10 +414,23 @@ export the module
 -------------------------------------------
 */
 exports.start = start;
+exports.login = login;
+exports.register = register;
 exports.upload = upload;
 exports.client = client;
 exports.lib = lib;
 exports.image = image;
+
+
 exports.uploadPost = uploadPost;
 exports.imagePost = imagePost;
+exports.loginPost = loginPost;
+exports.registerPost = registerPost;
+
+
+exports.findUserInArea = findUserInArea;
+
+exports.findUserInAreaPost = findUserInAreaPost;
+
+
 exports.dbTest = dbTest;

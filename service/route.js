@@ -4,13 +4,28 @@ code for the router
 pass the response object to handler module
 return the answer to the page ot handle it
 */
+var SessionHandler = require("./sessionHandlers.js").sessionHandler,
+sessionHandler = new SessionHandler();
+
 function route(handle,pathname,request,response){
-	var the_path = '/'+pathname[1];
+	var the_path = '/'+pathname[1],
+	session = sessionHandler.getSession(request,response);//just get the session,it will handle it
+	console.log(session);
+
 	console.log(typeof handle[the_path]);
 	console.log(the_path);
 
 	//Determine whether the current mapping of the action is a function
-	if (typeof handle[the_path] === 'function') {
+	if (pathname[1] === "api") {
+		var content;
+		if(request.method === 'POST'){
+			content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
+		} else {
+			content = handle[pathname[1]][pathname[2]][pathname[3]](request,response,pathname);
+		}
+		console.log('handle content: '+content);
+		return content;
+	} else if (typeof handle[the_path] === 'function') {
 		//take the method directly
 		var content;
 		if(request.method === 'POST'){
@@ -27,9 +42,6 @@ function route(handle,pathname,request,response){
 		response.end();
 		return "404 not found";
 	};
-
-	
-
 }
 
 exports.route = route;
