@@ -26,11 +26,11 @@ var handle = {
 	"api":{
 		"forPost":{
 			"discover":{
-				"findUser":requestHandlers.findUserInAreaPost
+				"finduser":requestHandlers.findUserInAreaPost
 			}
 		},
 		"discover":{
-			"findUser":requestHandlers.findUserInArea
+			"finduser":requestHandlers.findUserInArea
 		}	
 	}
 };

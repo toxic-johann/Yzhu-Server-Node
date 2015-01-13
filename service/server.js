@@ -26,7 +26,7 @@ function start (route,handle) {
 	function onRequest (request,response) {
 		// body...
 		var postData = "",
-		pathname = url.parse(request.url).pathname.split('/');
+		pathname = url.parse(request.url).pathname.toLowerCase().split('/');
 		console.log("Request for "+pathname[1]+" received");
 
 		//注一： setEncodeing不再需要（formidable 自身会处理)
