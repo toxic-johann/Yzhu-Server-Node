@@ -7,6 +7,8 @@
     "mongoose":"",
     "sockjs":"",
     "primus-rooms":"",
-    "express":""
+    "express":"",
+    "redis":"",
+    "jpush-sdk":""
   }
 }

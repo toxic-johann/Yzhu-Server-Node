@@ -6,7 +6,8 @@ var http = require('http'),
 Primus = require('primus'),
 Rooms = require('primus-rooms'),
 url = require('url'),
-express = require('express');
+express = require('express'),
+cleanMessagePosition = require("./databaseHandlers").cleanMessagePosition;
 
 
 /*
@@ -60,15 +61,17 @@ function start (route,handle) {
 			room = data.room,
 			message = data.msg;
 			console.log('data received')
+			console.log(spark.Spark);
 
 			if('join' === action){
 				spark.join(room,function(){
 					//send message to this client
+					spark.uid = data.id;
 					spark.write('you joined room '+room);
 
 					//send message to all clients expect this one
 					spark.room(room).write('test');
-					spark.room(room).except(spark.id).write(spark.id+'joined room' +room);
+					spark.room(room).except(spark.uid).write(spark.uid+'joined room' +room);
 				});
 			}
 
@@ -95,5 +98,7 @@ function start (route,handle) {
 
 	server.listen(3333);
 	console.log("Server has started");
+
+	setInterval(cleanMessagePosition,1000*60*60);
 }
 exports.start = start;

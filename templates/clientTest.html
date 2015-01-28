@@ -22,9 +22,9 @@
 
       function client(room_name) {
 
-        myPrimus.primus = new Primus.connect('ws://120.24.208.130:3333');
+        myPrimus.primus = new Primus.connect('ws://127.0.0.1:3333');
 
-        myPrimus.primus.write({action:'join',room:room_name});
+        myPrimus.primus.write({action:'join',room:room_name,id:"123139719283"});
 
         myPrimus.primus.on('data',function(message){
           console.log("this is the "+message);
@@ -59,7 +59,7 @@
         };
 
         xmlhttp.open("POST","/image",true);
-        var form = document.forms.namedItem("fileinfo")
+        var form = document.forms.namedItem("fileinfo");
         var formData = new FormData(form);
         formData.append("foo","bar");
         xmlhttp.addEventListener('error', onError, false);

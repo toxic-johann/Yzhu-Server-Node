@@ -1,6 +1,7 @@
 //this handler is to manage session
 var Session = require('./session.js').Session,
 setSession = require('./databaseHandlers.js').setSession,
+refleshSession = require('./databaseHandlers.js').refleshSession,
 deleteSession = require('./databaseHandlers.js').deleteSession;
 
 exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
@@ -44,6 +45,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 
 			if(sessions[value]){
 				console.log('this way');
+				refleshSession(sessions[value].sessionId);
 				return sessions[value];
 			}
 		}

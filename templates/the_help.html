@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>the help {{messageId}}</title>
+</head>
+<body>
+	<div id="show"></div>
+</body>
+<script src="/lib/wrox.js"></script>
+<script>
+	var Info = {
+		messageId:"{{messageId}}".replace(/^\w/,"M"),//change the first word,
+		EventUtil:Wrox.ProJS.EventUtil
+	}
+	function getHelpInfo(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		tempText = [],
+		result,
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				result = JSON.parse(xmlhttp.responseText);
+				console.log(result);
+				tempText.push("<ul>");
+				for(item in result.message[0]){
+					tempText.push("<li>");
+					tempText.push(item);
+					tempText.push("-->");
+					tempText.push(result.message[0][item]);
+					tempText.push("</li>");
+				}
+				tempText.push("</ul>");				
+				document.getElementById("show").innerHTML += tempText.join("");
+			}
+		};
+
+		xmlhttp.open("POST","/api/message/HelpInfo",true);
+        var data ={
+        	messageId:Info.messageId
+        },
+        data = JSON.stringify(data);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function getAcceptGroup(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		tempText = [],
+		result,
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				result = JSON.parse(xmlhttp.responseText);
+				tempText.push("<ul>");
+				var len = result.user.length;
+				for (var i=0;i<len;i++){
+					tempText.push("<li>");
+					tempText.push(result.user[i]);
+					tempText.push("</li>");
+				}
+				tempText.push("</ul>");
+				document.getElementById("show").innerHTML += tempText.join("");
+			}
+		};
+
+		xmlhttp.open("POST","/api/group/accept",true);
+        var data ={
+        	messageId:Info.messageId
+        },
+        data = JSON.stringify(data);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function getWaitGroup(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		tempText = [],
+		result,
+		btns,
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				result = JSON.parse(xmlhttp.responseText);
+				tempText.push("<ul>");
+				var len = result.user.length;
+				for (var i=0;i<len;i++){
+					tempText.push("<li>");
+					tempText.push(result.user[i]);
+					tempText.push('<input type="button" value="accept">');
+					tempText.push('<input type="button" value="ignore">');
+					tempText.push("</li>");
+				}
+				tempText.push("</ul>");
+				document.getElementById("show").innerHTML += tempText.join("");
+				for (var i=result.user.length-1;i>-1;i--){
+					(function (j){
+						console.log(j);
+						btns = document.getElementsByTagName("ul")[2].getElementsByTagName("li")[j];
+						Info.EventUtil.addHandler(btns.getElementsByTagName("input")[0],'click',function(){acceptHelp(result.user[j],btns,j)});
+						Info.EventUtil.addHandler(btns.getElementsByTagName("input")[1],'click',function(){ignoreHelp(result.user[j],btns,j)});
+					})(i);
+				}
+			}
+		};
+
+		xmlhttp.open("POST","/api/group/wait",true);
+        var data ={
+        	messageId:Info.messageId
+        },
+        data = JSON.stringify(data);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function acceptHelp(userId,btns,i){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		tempText = [],
+		result,
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				if(xmlhttp.responseText === "1"){
+					btns.removeChild(btns.getElementsByTagName("input")[1]);
+					btns.removeChild(btns.getElementsByTagName("input")[0]);
+					document.getElementsByTagName("ul")[1].appendChild(btns);
+				}
+			}
+		};
+
+		xmlhttp.open("POST","/api/group/acceptHelp",true);
+        var data ={
+        	messageId:Info.messageId,
+        	userId:userId
+        },
+        data = JSON.stringify(data);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function ignoreHelp(userId,btns,i){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		tempText = [],
+		result,
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				btns.parentNode.removeChild(btns);
+			}
+		};
+
+		xmlhttp.open("POST","/api/group/ignoreHelp",true);
+        var data ={
+        	messageId:Info.messageId,
+        	userId:userId
+        },
+        data = JSON.stringify(data);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	window.onload = function () {
+		getHelpInfo();
+		getAcceptGroup();
+		getWaitGroup();
+		console.log(Info.messageId);
+	}
+</script>
+</html>

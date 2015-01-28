@@ -2,85 +2,23 @@
 1 verbose cli [ 'D:\\nodejs\\node\\\\node.exe',
 1 verbose cli   'D:\\nodejs\\node\\node_modules\\npm\\bin\\npm-cli.js',
 1 verbose cli   'install',
-1 verbose cli   'sech' ]
+1 verbose cli   'jpush-sdk' ]
 2 info using npm@1.4.28
 3 info using node@v0.10.34
 4 verbose node symlink D:\nodejs\node\\node.exe
-5 warn package.json @ No repository field.
-6 verbose readDependencies using package.json deps
-7 verbose cache add [ 'sech', null ]
-8 verbose cache add name=undefined spec="sech" args=["sech",null]
-9 verbose parsed url { protocol: null,
-9 verbose parsed url   slashes: null,
-9 verbose parsed url   auth: null,
-9 verbose parsed url   host: null,
-9 verbose parsed url   port: null,
-9 verbose parsed url   hostname: null,
-9 verbose parsed url   hash: null,
-9 verbose parsed url   search: null,
-9 verbose parsed url   query: null,
-9 verbose parsed url   pathname: 'sech',
-9 verbose parsed url   path: 'sech',
-9 verbose parsed url   href: 'sech' }
-10 silly lockFile 11305412-sech sech
-11 verbose lock sech C:\Users\asus\AppData\Roaming\npm-cache\11305412-sech.lock
-12 silly lockFile 11305412-sech sech
-13 silly lockFile 11305412-sech sech
-14 verbose addNamed [ 'sech', '' ]
-15 verbose addNamed [ null, '*' ]
-16 silly lockFile 772bcc12-sech sech@
-17 verbose lock sech@ C:\Users\asus\AppData\Roaming\npm-cache\772bcc12-sech.lock
-18 silly addNameRange { name: 'sech', range: '*', hasData: false }
-19 verbose request where is /sech
-20 verbose request registry http://registry.npmjs.org/
-21 verbose request id 2483ed0ae53d0948
-22 verbose url raw /sech
-23 verbose url resolving [ 'http://registry.npmjs.org/', './sech' ]
-24 verbose url resolved http://registry.npmjs.org/sech
-25 verbose request where is http://registry.npmjs.org/sech
-26 info trying registry request attempt 1 at 19:00:39
-27 http GET http://registry.npmjs.org/sech
-28 http 404 http://registry.npmjs.org/sech
-29 verbose headers { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
-29 verbose headers   'content-type': 'application/json',
-29 verbose headers   'cache-control': 'max-age=0',
-29 verbose headers   'content-length': '52',
-29 verbose headers   'accept-ranges': 'bytes',
-29 verbose headers   date: 'Sun, 11 Jan 2015 11:00:32 GMT',
-29 verbose headers   via: '1.1 varnish',
-29 verbose headers   age: '0',
-29 verbose headers   connection: 'keep-alive',
-29 verbose headers   'x-served-by': 'cache-ty67-TYO',
-29 verbose headers   'x-cache': 'MISS',
-29 verbose headers   'x-cache-hits': '0',
-29 verbose headers   'x-timer': 'S1420974031.493761,VS0,VE747' }
-30 silly registry.get cb [ 404,
-30 silly registry.get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
-30 silly registry.get     'content-type': 'application/json',
-30 silly registry.get     'cache-control': 'max-age=0',
-30 silly registry.get     'content-length': '52',
-30 silly registry.get     'accept-ranges': 'bytes',
-30 silly registry.get     date: 'Sun, 11 Jan 2015 11:00:32 GMT',
-30 silly registry.get     via: '1.1 varnish',
-30 silly registry.get     age: '0',
-30 silly registry.get     connection: 'keep-alive',
-30 silly registry.get     'x-served-by': 'cache-ty67-TYO',
-30 silly registry.get     'x-cache': 'MISS',
-30 silly registry.get     'x-cache-hits': '0',
-30 silly registry.get     'x-timer': 'S1420974031.493761,VS0,VE747' } ]
-31 silly lockFile 772bcc12-sech sech@
-32 silly lockFile 772bcc12-sech sech@
-33 error 404 404 Not Found: sech
-33 error 404
-33 error 404 'sech' is not in the npm registry.
-33 error 404 You should bug the author to publish it
-33 error 404
-33 error 404 Note that you can also install from a
-33 error 404 tarball, folder, or http url, or git url.
-34 error System Windows_NT 6.2.9200
-35 error command "D:\\nodejs\\node\\\\node.exe" "D:\\nodejs\\node\\node_modules\\npm\\bin\\npm-cli.js" "install" "sech"
-36 error cwd D:\GitHub\workspace\Yzhu-Server-Node
-37 error node -v v0.10.34
-38 error npm -v 1.4.28
-39 error code E404
-40 verbose exit [ 1, true ]
+5 error Failed to parse json
+5 error Unexpected token r
+6 error File: D:\GitHub\workspace\Yzhu-Server-Node\package.json
+7 error Failed to parse package.json data.
+7 error package.json must be actual JSON, not just JavaScript.
+7 error
+7 error This is not a bug in npm.
+7 error Tell the package author to fix their package.json file. JSON.parse
+8 error System Windows_NT 6.2.9200
+9 error command "D:\\nodejs\\node\\\\node.exe" "D:\\nodejs\\node\\node_modules\\npm\\bin\\npm-cli.js" "install" "jpush-sdk"
+10 error cwd D:\GitHub\workspace\Yzhu-Server-Node
+11 error node -v v0.10.34
+12 error npm -v 1.4.28
+13 error file D:\GitHub\workspace\Yzhu-Server-Node\package.json
+14 error code EJSONPARSE
+15 verbose exit [ 1, true ]

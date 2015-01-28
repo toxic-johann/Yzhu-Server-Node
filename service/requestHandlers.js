@@ -10,7 +10,8 @@ utils = require("./utils.js"),
 formidable = require("formidable"),
 querystring = require("querystring"),
 util = require("util"),
-mongoose = require("mongoose"),
+//mongoose = require("mongoose"),
+//i give up the mongodb
 databaseHandlers = require("./databaseHandlers.js");
 
 function login (request,response,pathname,register) {
@@ -23,7 +24,7 @@ function login (request,response,pathname,register) {
 	return ("Request handler 'login' was called");
 }
 
-function register (request,response,pathnname) {
+function register (request,response,pathname) {
 	// show the register page
 	response.writeHead(200,{"Content-Type":"text/html"});
 	response.write(swig.renderFile('./templates/register.html'));
@@ -144,7 +145,7 @@ function imagePost (request,response,pathname) {
 		} catch(err) {
 			console.log(err);
 		}
-		response.end(util.inspect({fields: fields, files: files}));
+		response.end(JSON.stringify({fields: fields, files: files}));
 		console.log("parse done");
 		console.log(fields);
 		console.log(files);
@@ -160,7 +161,7 @@ function uploadPost (request,response,pathname) {
     form.parse(request, function(err, fields, files) {
       response.writeHead(200, {'content-type': 'text/plain'});
       response.write('received upload:\n\n');
-      response.end(util.inspect({fields: fields, files: files}));
+      response.end(JSON.stringify({fields: fields, files: files}));
       console.log(fields);
     });
 
@@ -169,33 +170,47 @@ function uploadPost (request,response,pathname) {
 
 //income
 //cellPhone,password
+//----------------------------------------------------------------------------
+//output
+//state
+//0-->success;1-->not registered;2-->password wrong;
 function loginPost (request,response,pathname) {
 	// handle the login
 	var form = new formidable.IncomingForm();
 
 	form.parse(request,function(err,fields,files){
 		//reflect to front
-		databaseHandlers.loginUser(fields.cellPhone,function (state,error_code,result) {
+		console.log(fields);
+		fields.sessionId = request.session;
+		databaseHandlers.loginUser(fields,function (state,error_code,result) {
 			if(state){
-				if(!result[0]){
-					console.log('the phone has not been registed');
-				}
-				else{
-					if(result[0].password !== querystring.escape(fields.password)){
-						console.log('the password is wrong');
-					}
-					else{
-						console.log('success');
-						databaseHandlers.setSession()
-					}
-				}
+				console.log('success');
+				response.writeHead(200,{"content-typen":"text/plain"});
+				response.end("0");
 			}
 			else{
-
+				response.writeHead(200,{"content-typen":"text/plain"});
+				response.end(error_code.toString());
 			}
 		});
 	});
 	return ("Post handler 'login' was called");
+}
+
+function logoutPost (request,response,pathname){
+	// handle the login
+	databaseHandlers.logoutUser(request.session,function (state,error_code,result) {
+		if(state){
+			console.log('success');
+			response.writeHead(200,{"content-typen":"text/plain"});
+			response.end("0");
+		}
+		else{
+			response.writeHead(200,{"content-typen":"text/plain"});
+			response.end(error_code.toString());
+		}
+	});
+	return ("Post handler 'logout' was called");
 }
 
 //income
@@ -222,9 +237,74 @@ function registerPost (request,response,pathname) {
 	});
 	return ("Post handler 'register' was called");
 }
+//-------------------------------------------
+//api handler GET
+//mainly set for test
+//-------------------------------------------
+
+//show position
+function findUserInArea (request,response,pathname) {
+	// body...
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/discover_find_user.html'));
+	response.end();
+	return ("API handler 'find user depends on area in discover' was called");
+}
+
+//show message in area
+function findMessageInArea(request,response,pathname){
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/discover_find_message.html'));
+	response.end();
+	return ("API handler 'find message depends on area in discover' was called");
+}
+
+//show position insert
+function setPosition (request,response,pathname) {
+	// body...
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/set_position.html'));
+	response.end();
+	return ("API handler 'set position' was called");
+}
+
+//send help to people
+function sendHelp (request,response,pathname) {
+	// body...
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/send_help.html'));
+	response.end();
+	return ("API handler 'send help' was called");
+}
+
+//to follow sb
+function toFollow (request,response,pathname){
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/to_follow.html'));
+	response.end();
+	return ("API handler 'to follow' was called");
+}
+
+//to show the receive message page
+function myReceive (request,response,pathname){
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/my_receive.html'));
+	response.end();
+	return ("API handler 'my receive' was called");
+}
+
+//to show the help page
+function theHelp (request,response,pathname){
+	console.log(pathname[4]);
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/the_help.html',{
+    messageId:pathname[4]}));
+	response.end();
+	return ("API handler 'the_help' was called");
+}
 
 //--------------------------------------------
-//api handlers
+//api post handlers
 //set for mobile phone
 //--------------------------------------------
 
@@ -244,11 +324,11 @@ function findUserInAreaPost (request,response,pathname) {
 				console.log(error_code);
 			} else {
 				result = utils.selectRandomAndUnique(result,25);
-				for(var i=result.length;i--;i>0){
+				/*for(var i=result.length;i--;i>0){
 					(function (j) {
 						// closure
 						//use this method to save i
-						databaseHandlers.getInfoById(result[j].userId,function (state,error_code,row) {
+						databaseHandlers.getInfoByUserId(result[j].userId,function (state,error_code,row) {
 							// body...
 							if(!state){
 								console.log(error_code);
@@ -263,7 +343,10 @@ function findUserInAreaPost (request,response,pathname) {
 							}
 						});
 					}(i));
-				}
+				}*/
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.write(result.length+"\n\n");
+				response.end(JSON.stringify({users:result}));
 			}
 		});
 	});
@@ -271,12 +354,257 @@ function findUserInAreaPost (request,response,pathname) {
 }
 
 //income
-function findUserInArea (request,response,pathname) {
+//corner or code
+//decide to use corner
+//--------------------
+//output
+//message id
+function findMessageInAreaPost (request,response,pathname) {
 	// body...
-	response.writeHead(200,{"Content-Type":"text/html"});
-	response.write(swig.renderFile('./templates/discover_find_user.html'));
-	response.end();
-	return ("API handler 'find user depends on area in discover' was called");
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		databaseHandlers.getMessageByLocation(fields,function(state,error_code,result){
+			if(!state){
+				console.log(error_code);
+				response.writeHead(200, {'content-type': 'application/json'});
+				response.end("nothing");
+			} else {
+				result = utils.selectRandomAndUnique(result,25);
+				response.writeHead(200, {'content-type': 'application/json'});
+				response.end(JSON.stringify({"messages":result}));
+			}
+		});
+	});
+	return ("API Post handler 'find message depends on area in discover' was called");
+}
+
+
+//income
+//uid,position,code
+function setPositionPost (request,response,pathname) {
+	// body...
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		databaseHandlers.setPosition(fields,function (state,err) {
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("ok");
+			}
+		})
+		
+	});
+	return ("Post handler 'set position' was called");
+}
+
+//income
+//userId,content,type
+function sendHelpPost (request,response,pathname) {
+	// body...
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.sendHelp(fields,function (state,err) {
+			if(state){
+				sendHelp(request,response,pathname);
+			}
+		})
+		
+	});
+	return ("Post handler 'send help' was called");
+}
+
+function offerHelpPost (request,response,pathname) {
+	// body...
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.offerHelp(fields,function (state,err,reply) {
+			console.log(state);
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end(reply.toString());	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("failed");	
+			}
+		})
+		
+	});
+	return ("Post handler 'send help' was called");
+}
+
+function refuseToHelpPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.refuseToHelp(fields,function (state,err,reply) {
+			console.log(state);
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("1");	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'refuse to help' was called");
+}
+
+function acceptHelpPost (request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.acceptHelp(fields,function (state,err,reply) {
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("1");	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'accept help' was called");
+}
+
+function ignoreHelpPost (request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.ignoreHelp(fields,function (state,err,reply) {
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("1");	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'accept help' was called");
+}
+
+function helpInfoPost (request,response,pathname) {
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields.messageId);
+		databaseHandlers.getMessageByMessageId([fields.messageId],function (state,err,reply) {
+			console.log(state);
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end(JSON.stringify({message:reply}));	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'help info' was called");
+}
+
+function acceptGroupPost (request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields.messageId);
+		databaseHandlers.getAcceptGroupByMessageId(fields.messageId,function (state,err,reply) {
+			console.log(state);
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end(JSON.stringify({user:reply}));	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'help info' was called");
+}
+
+function waitGroupPost (request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields.messageId);
+		databaseHandlers.getWaitGroupByMessageId(fields.messageId,function (state,err,reply) {
+			console.log(state);
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end(JSON.stringify({user:reply}));	
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("0");	
+			}
+		})
+	});
+	return ("Post handler 'help info' was called");
+}
+
+function userInfoPost (request,response,pathname){
+
+}
+
+//income
+//userId,toFollowPhone
+function toFollowPost (request,response,pathname) {
+	// body...
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.followUser(fields,function (state,err) {
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("ok");
+			}
+		})
+		
+	});
+	return ("Post handler 'to follow' was called");
+}
+
+//income
+//userId
+//---------------------------------------------------
+//ouput
+//messages receive set
+function myReceivePost (request,response,pathname) {
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.getReceiveById(fields,function (state,err,result) {
+			if(state){
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end(JSON.stringify({"messages":result}));
+			} else {
+				response.writeHead(200, {'content-type': 'text/plain'});
+				response.end("nothing");
+			}
+		})
+		
+	});
+	return ("Post handler 'to follow' was called");
 }
 
 /*
@@ -426,11 +754,31 @@ exports.uploadPost = uploadPost;
 exports.imagePost = imagePost;
 exports.loginPost = loginPost;
 exports.registerPost = registerPost;
+exports.logoutPost = logoutPost;
 
 
+exports.setPosition = setPosition;
 exports.findUserInArea = findUserInArea;
+exports.findMessageInArea = findMessageInArea;
+exports.sendHelp = sendHelp;
+exports.toFollow = toFollow;
+exports.myReceive = myReceive;
+exports.theHelp = theHelp;
 
+exports.setPositionPost = setPositionPost;
 exports.findUserInAreaPost = findUserInAreaPost;
+exports.findMessageInAreaPost = findMessageInAreaPost;
+exports.sendHelpPost = sendHelpPost;
+exports.offerHelpPost = offerHelpPost;
+exports.refuseToHelpPost = refuseToHelpPost;
+exports.ignoreHelpPost = ignoreHelpPost;
+exports.acceptHelpPost =acceptHelpPost;
+exports.toFollowPost = toFollowPost;
+exports.myReceivePost = myReceivePost;
+exports.helpInfoPost = helpInfoPost;
+exports.acceptGroupPost = acceptGroupPost;
+exports.waitGroupPost = waitGroupPost;
+exports.userInfoPost = userInfoPost;
 
 
 exports.dbTest = dbTest;

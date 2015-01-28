@@ -8,9 +8,14 @@ var SessionHandler = require("./sessionHandlers.js").sessionHandler,
 sessionHandler = new SessionHandler();
 
 function route(handle,pathname,request,response){
-	var the_path = '/'+pathname[1],
-	session = sessionHandler.getSession(request,response);//just get the session,it will handle it
-	console.log(session);
+	var the_path = '/'+pathname[1];
+	//the lib do not use lib
+	if(the_path != "/lib"){
+		session = sessionHandler.getSession(request,response);//just get the session,it will handle it
+		console.log(session);
+		request.session = session;
+	}
+	
 
 	console.log(typeof handle[the_path]);
 	console.log(the_path);
@@ -19,29 +24,54 @@ function route(handle,pathname,request,response){
 	if (pathname[1] === "api") {
 		var content;
 		if(request.method === 'POST'){
-			content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
+			if(typeof handle[pathname[1]]['forPost'][pathname[2]][pathname[3]] === 'function'){
+				content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
+				console.log('handle content: '+content);
+				return content;
+			} else {
+				return404(request,response,pathname);
+			}
 		} else {
-			content = handle[pathname[1]][pathname[2]][pathname[3]](request,response,pathname);
+			if(typeof handle[pathname[1]][pathname[2]][pathname[3]] === 'function'){
+				content = handle[pathname[1]][pathname[2]][pathname[3]](request,response,pathname);
+				console.log('handle content: '+content);
+				return content;
+			} else {
+				return404(request,response,pathname);
+			}
 		}
-		console.log('handle content: '+content);
-		return content;
-	} else if (typeof handle[the_path] === 'function') {
+	} else {
 		//take the method directly
 		var content;
 		if(request.method === 'POST'){
-			content = handle['forPost'][the_path](request,response,pathname);
+			if (typeof handle['forPost'][the_path] === 'function'){
+				content = handle['forPost'][the_path](request,response,pathname);
+				console.log('handle content: '+content);
+				return content;
+			}
+			else {
+				return404(request,response,pathname);
+			}
 		} else {
-			content = handle[the_path](request,response,pathname);
+			if (typeof handle[the_path] === 'function'){
+				content = handle[the_path](request,response,pathname);
+				console.log('handle content: '+content);
+				return content;
+			}
+			else {
+				return404(request,response,pathname);
+			}
 		}
-		console.log('handle content: '+content);
-		return content;
-	} else {
-		console.log("No request handler found for "+pathname);
-		response.writeHead(404,{"Content-Type":"text/plain"});
-		response.write("404 not found");
-		response.end();
-		return "404 not found";
-	};
+	}
+}
+
+function return404 (request,response,pathname) {
+	// body...
+	console.log("No request handler found for "+pathname);
+	response.writeHead(404,{"Content-Type":"text/plain"});
+	response.write("404 not found");
+	response.end();
+	return "404 not found";
 }
 
 exports.route = route;

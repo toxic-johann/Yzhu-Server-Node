@@ -2,7 +2,15 @@
 //so it just handle the database problem
 var mysql = require('mysql'),
 dbInfo = require('../conf/localConf.js').database,
-utils = require('./utils.js');
+utils = require('./utils.js'),
+redis = require("redis"),
+redisClient = redis.createClient(),
+lock = require("redis-lock")(redisClient);
+
+redisClient.on("error",function (err) {
+	console.log(err);
+	callback(false,err);
+});
 
 var pool = mysql.createPool({
 	connectionLimit:10,
@@ -19,6 +27,9 @@ pool.on('enqueue', function () {
 
 function dbTestHandler (callback) {
 	// here is just to test the mysql server
+	callback = callback || function () {
+		// nothing
+	};
 
 	pool.getConnection(function (err,connection) {
 		// body...
@@ -33,6 +44,9 @@ function dbTestHandler (callback) {
 };
 
 function getAllUser (callback) {
+	callback = callback || function () {
+		// nothing
+	};
 	// Set to see the user id
 	pool.getConnection(function (err,connection) {
 		// body...
@@ -53,13 +67,18 @@ function registerUser (fields,callback) {
 	//just to insert the user,if dup,return false
 	//if success return true
 
+	callback = callback || function () {
+		// nothing
+	};
+
+
 	//check the fields
 	if(utils.isDataExistNull(fields)){
 		callback(false,1048);
 		return;
 	}
 
-	pool.getConnection(function (err,connection) {
+	/*pool.getConnection(function (err,connection) {
 		// insert
 		var sql = [];
 		sql[0] = connection.escape(fields.user_name);
@@ -76,21 +95,56 @@ function registerUser (fields,callback) {
 		});
 
 		connection.release();
-	});
+	});*/
+
+    var pid = parseInt(fields.cellPhone).toString(16),
+    key = 'Uid'+pid+Math.floor(Math.random()*1e16).toString(16);
+    //check if the phone has been registered
+    redisClient.SADD("Phone",pid,function (err, reply) {
+    	if(reply === 1){
+    		//set the user info set
+    		redisClient.HMSET("User:"+key,fields);
+    		//set the phone->id set
+    		redisClient.SET("Pid:"+pid,key);
+    		callback(true);
+    	} else {
+    		callback(false,1062);
+    	}
+    });
+    //the phone and the password need to be secret!!
 };
 
 //income
 //sessionId,userId
 function setSession (sessionId,userId,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// check the input
+	console.log("set session!!!!!")
 	if(utils.isDataExistNull(sessionId) || utils.isDataExistNull(userId)){
 		callback(false,1048);
 		return;
 	}
 
-	pool.getConnection(function (err,connection) {
+	redisClient.SET("Session:"+sessionId,userId,function (err,reply) {
+		if(!err){
+			console.log("ok");
+			redisClient.EXPIRE("Session:"+sessionId,3600,function (err,reply) {
+				console.log(reply);
+			});
+			callback(true,0);
+		} else {
+			callback(false,err);
+		}
+	});
+
+	/*pool.getConnection(function (err,connection) {
 		// insert id
-		var sql = "INSERT INTO session(sessionId,userId) VALUES ("+connection.escape(sessionId)+","+connection.escape(userId)+")";
+		var sId = connection.escape(sessionId),
+		uId = connection.escape(userId),
+		sql = "INSERT INTO session(sessionId,userId) VALUES ("+sId+","+uId+")";
 		connection.query(sql,function (err1,rows){
 			if(err1) {
 				callback(false,err1.errno);
@@ -101,22 +155,475 @@ function setSession (sessionId,userId,callback) {
 		});
 
 		connection.release();
+	});*/
+}
+
+//income
+//sessionId
+function refleshSession (sessionId,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(sessionId)){
+		callback(false,1048);
+		return;
+	}
+	
+	redisClient.EXPIRE("Session:"+sessionId,3600,function (err,reply) {
+		console.log(reply);
+	});
+	callback(true);
+}
+
+//income
+//userId,content,type,time
+function sendHelp (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	var mhid = "Mhid"+ new Date().getTime().toString(16)+Math.floor(Math.random()*1e16).toString(16);
+	fields.time = new Date().getTime();
+	fields.state = 0;//indicate no help accept
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+	redisClient.HMSET("Message:help:"+mhid,fields,function (err,reply) {
+		if(reply === "OK"){
+			//key do not exist
+			console.log("message stream add");
+			redisClient.ZADD("Message:send:help:"+fields.userId,fields.time,mhid);
+			redisClient.ZADD("Message:type:"+fields.type,fields.time,mhid);
+			getReceiverSet(fields,mhid,function (state,err,reply){
+				for(var i=reply.length-1;i>-1;i--){
+					console.log(reply[i]);
+					if(reply[i] == fields.userId){continue;}
+					receiveMessage(reply[i],mhid,fields.time);
+				}
+			});
+			setMessagePosition(fields,mhid);
+			callback(true);
+		} else {
+			console.log("this is reply --> "+reply.toString());
+			callback(false);
+		}
+	});
 	});
 }
+
+//income
+//userId,messageId
+//---------------------------------------------
+//output
+//state
+function offerHelp (fields,callback) {
+	// body...
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+		console.log(reply);
+	//use the rank to find whether the message in the set
+	redisClient.ZRANK("Message:receive:help:"+fields.userId,fields.messageId,function (err,reply) {
+		if(reply !== null){
+			//user was recommonded
+			redisClient.SADD("Group:help:accept:"+fields.messageId,fields.userId,function (err,reply){
+				if(reply>0){
+					callback(true,0,1);//1 for accept
+					redisClient.SADD("Samaritan:help:accept:"+fields.userId,fields.messageId);
+				} else callback(false);
+			});
+		} else {
+			redisClient.SADD("Group:help:wait:"+fields.messageId,fields.userId,function (err,reply){
+				if(reply>0){
+					callback(true,0,2);//2 for wait for accept
+					redisClient.SADD("Samaritan:help:wait:"+fields.userId,fields.messageId);
+				} else callback(false);
+			});
+		}
+	});
+	});
+}
+
+function refuseToHelp (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+		console.log(reply);
+	//use the rank to find whether the message in the set
+	redisClient.ZREM("Message:receive:help:"+fields.userId,fields.messageId,function (err,reply){
+		if(reply>0){
+			callback(true);
+		} else {
+			callback(false);
+		}
+	});
+	});
+}
+
+function acceptHelp (fields,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	//use the rank to find whether the message in the set
+	redisClient.SREM("Group:help:wait:"+fields.messageId,fields.userId,function (err,reply){
+		if(reply>0){
+			redisClient.SADD("Samaritan:help:accept:"+fields.userId,fields.messageId,function (err,reply){
+				if(!err){
+					redisClient.SADD("Group:help:accept:"+fields.messageId,fields.userId,function (err,reply){
+						console.log("f!!");
+						if(!err){
+							redisClient.ZADD("Message:receive:help:"+fields.userId,new Date().getTime(),fields.messageId,function (err,reply){
+								console.log(fields.userId);
+								console.log("e!!");
+								if(!err){
+									callback(true);
+								} else {
+									callback(false);
+									console.log("a!!");
+								}
+							});
+						} else {
+							callback(false);
+							console.log("b!!");
+						}
+					});
+				} else {
+					callback(false);
+					console.log("c!!");
+				}
+			});
+		} else {
+			callback(false);
+			console.log("d!!");
+		}
+	});
+}
+
+function ignoreHelp (fields,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	//use the rank to find whether the message in the set
+	redisClient.SREM("Group:help:wait:"+fields.messageId,fields.userId,function (err,reply){
+		if(reply>0){
+			redisClient.SREM("Samaritan:help:wait:"+fields.userId,fields.messageId,function (err,reply){
+				if(!err){
+					redisClient.SADD("Samaritan:help:ignored:"+fields.userId,fields.messageId,function (err,reply){
+						if(!err){
+							callback(true);
+						} else {
+							callback(false);
+						}
+					});
+				} else {
+					callback(false);
+				}
+			});
+		} else {
+			callback(false);
+		}
+	});
+}
+
+
+function getReceiveById (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+		console.log(reply);
+	var check = new Date().getTime().toString(16)+Math.floor(Math.random()*1e16).toString(16);
+	//used for multiple kind of messages
+	redisClient.ZREVRANGE("Message:receive:help:"+fields.userId,fields.start,fields.start+fields.step,function (err,reply){
+		if(reply.length>0){
+			getMessageByMessageId(reply,function (state,err,reply){
+				getUMStateByMessageId(fields.userId,reply,function(state,err,reply){
+					reply.sort(function (a,b){return b.time-a.time;});
+					callback(true,0,reply);
+				});
+			});
+		} else {
+			callback(false,err);
+		}
+	});
+	});
+}
+
+
+//income
+//userid,check(tell the message)
+//---------------------------------------------
+//output
+//receiver set (on redis)
+function getReceiverSet (fields,check,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(fields) || utils.isDataExistNull(check)){
+		callback(false,1048);
+		return;
+	}
+
+	getUserNearbySet(fields,check,function (state,err,reply){
+		if(state){
+			redisClient.SUNION("Relation:follow:"+fields.userId,"Position:temp:nearby:"+check,function (err,reply) {
+				callback(true,0,reply);
+				redisClient.DEL("Position:temp:nearby:"+check);
+				console.log(reply);
+			});
+		} else {
+			redisClient.SMEMBERS("Relation:follow:"+fields.userId,function (err,reply) {
+				callback(true,0,reply);
+				console.log(reply);
+			});
+		}
+	});
+}
+
+//income
+//location,check
+//----------------------------------------------
+//output
+//user nearby set (on redis)
+function getUserNearbySet (fields,check,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(fields) || utils.isDataExistNull(check)){
+		callback(false,1048);
+		return;
+	}
+
+	var delta = 1/6/Math.cos(fields.latitude/90);//about 10 km
+	console.log(fields);
+	redisClient.ZRANGEBYSCORE("Position:longitude",fields.longitude-delta,fields.longitude+delta,function (err,reply) {
+    	if(reply.length>0){
+    		//get the longitude set
+    		redisClient.SADD("Position:temp:longitude:"+check,reply);
+    		redisClient.ZRANGEBYSCORE("Position:latitude",fields.latitude-1/6,fields.latitude+1/6,function (err,reply) {
+    			if(reply.length>0){
+    				//get the latitude set
+    				redisClient.SADD("Position:temp:latitude:"+check,reply,function (err,reply) {
+    					if(reply>0){
+    						//get the inter uid
+    						redisClient.SINTER("Position:temp:longitude:"+check,"Position:temp:latitude:"+check,function (err,reply) {
+    							//clean the temp set
+    							redisClient.DEL("Position:temp:longitude:"+check);
+    							redisClient.DEL("Position:temp:latitude:"+check);
+    							redisClient.SADD("Position:temp:nearby:"+check,reply,function (err,reply) {
+    								if(reply>0){
+    									callback(true,0,reply);
+    								} else {
+    									callback(false,"null");
+    								}
+    							});
+    						});
+    					} else{
+    						callback(false,"null");
+    					}
+    				});
+    			} else {
+    				callback(false,"null");
+    			}
+    		});
+    	} else {
+    		callback(false,"null");
+    	}
+    });
+}
+
+//income
+//userId,messageId
+function receiveMessage (userId,messageId,time,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(userId) || utils.isDataExistNull(messageId) || utils.isDataExistNull(time)){
+		callback(false,1048);
+		return;
+	}
+
+	switch(messageId[1]){
+		case "h":
+		redisClient.ZADD("Message:receive:help:"+userId,time,messageId,function (err,reply){
+			if(reply === 1){
+				callback(true);
+			}
+		});
+		break;
+	}
+}
+
+
+//income
+//uid,longitude,latitude,code
+function setPosition (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+	//update the user's position
+	redisClient.HMSET("Position:user:"+fields.userId,fields,function (err,reply) {
+		if(reply === "OK"){
+			//key do not exist
+			console.log("positon add");
+			//if user have old position,remove it.
+			redisClient.ZREM("Position:longitude",fields.userId);
+			redisClient.ZREM("Position:latitude",fields.userId);
+			redisClient.ZREM("Position:code",fields.userId);
+
+			//add new position
+			redisClient.ZADD("Position:longitude",fields.longitude,fields.userId);
+			redisClient.ZADD("Position:latitude",fields.latitude,fields.userId);
+			redisClient.ZADD("Position:code",fields.code,fields.userId);
+
+			//delete the position when it log out
+
+			callback(true);
+		} else {
+			console.log("this is reply --> "+reply.toString());
+			callback(false,"fail");
+		}
+	});
+	});
+}
+
+//income
+//message,longitude,latitude,code
+function setMessagePosition (fields,messageId,callback) {
+	// body...
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields) || utils.isDataExistNull(messageId)){
+		callback(false,1048);
+		return;
+	}
+
+	switch(messageId[1]){
+		case "h":
+		//add new position index
+		redisClient.ZADD("Position:message:help:longitude",fields.longitude,messageId);
+		redisClient.ZADD("Position:message:help:latitude",fields.latitude,messageId);
+		redisClient.ZADD("Position:message:help:code",fields.code,messageId);
+
+		//add time index to delete!
+		redisClient.ZADD("Live:message:help",fields.time,messageId);
+		break;
+	}
+	callback(true);
+}
+
 
 //income
 //cellPhone
 //------------
 //outcome
 //password
-function loginUser (cellPhone,callback) {
+function loginUser (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// check cellPhone
-	if(utils.isDataExistNull(cellPhone)){
+	if(utils.isDataExistNull(fields)){
 		callback(false,1048);
 		return;
 	}
 
-	pool.getConnection(function (err,connection) {
+	fields.cellPhone = parseInt(fields.cellPhone).toString(16);
+	console.log(fields);
+	redisClient.GET("Pid:"+fields.cellPhone,function (err,reply){
+		if(reply){
+			fields.userId = reply;
+			redisClient.HGET("User:"+reply,"password",function(err,reply){
+				if(fields.password === reply){
+					setSession(fields.sessionId,fields.userId,function (state,err,reply){
+						if(state){
+							callback(true);
+						} else {
+							callback(false,3);
+						}
+					});
+				} else {
+					callback(false,2);//2-->password wrong
+				}
+			})
+		} else {
+			callback(false,1);//1-->not registered
+		}
+	})
+
+	/*pool.getConnection(function (err,connection) {
 		//select the password
 		connection.query("SELECT id,password FROM user where cellPhone = "+connection.escape(cellPhone),function (err1,rows) {
 			if(err1) {
@@ -128,7 +635,21 @@ function loginUser (cellPhone,callback) {
 		});
 
 		connection.release();
-	});	
+	});*/	
+}
+
+function logoutUser (sessionId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	// check cellPhone
+	if(utils.isDataExistNull(sessionId)){
+		callback(false,1048);
+		return;
+	}
+
+	deleteSession(sessionId,callback);
 }
 
 //income
@@ -137,6 +658,10 @@ function loginUser (cellPhone,callback) {
 //outcome
 //userId
 function getIdFromSession (sessionId,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// check session
 	if(utils.isDataExistNull(sessionId)){
 		callback(false,1048);
@@ -163,14 +688,27 @@ function getIdFromSession (sessionId,callback) {
 //-----------------------------------------------
 //output
 //userId(s)
+//to test
 function getUserByCode (code,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// check the code
 	if(utils.isDataExistNull(code)){
 		callback(false,1048);
 		return;
 	}
 
-	pool.getConnection(function (err,connection) {
+	redisClient.ZRANGEBYSCORE("Position:code",code,code,function (err,reply) {
+		if(reply.length>0){
+			callback(true,0,reply);
+		} else {
+			callback(false);
+		}
+	});
+
+	/*pool.getConnection(function (err,connection) {
 		// select user_id
 		connection.query("SELECT userId,longitude,latitude FROM position WHERE code = "+connection.escape(code),function (err1,rows) {
 			// body...
@@ -183,6 +721,28 @@ function getUserByCode (code,callback) {
 		});
 
 		connection.release();
+	});*/
+}
+
+//income
+//code
+//-----------------------------------------------
+//output
+//messageId(s)
+function getMessageByCode (fields,callback) {
+	// body...
+	callback = callback || function () {
+		// nothing
+	};
+
+	redisClient.ZRANGEBYSCORE("Position:message:help:code",fields.code,fields.code,function (err,reply){
+		if(reply.length>0){
+			redisClient.SADD("Position:message:temp:help:"+fields.check,reply,function (err){
+				callback(true,err);
+			});
+		} else {
+			callback(false,null);
+		}
 	});
 }
 
@@ -192,14 +752,40 @@ function getUserByCode (code,callback) {
 //output
 //userId(s)
 function getUserByCoordinate (corner,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// check corner
 	if(utils.isDataExistNull(corner)){
 		callback(false,1048);
 		return;
 	}
 
-	console.log('woww');
-	pool.getConnection(function (err,connection) {
+    var check=new Date().getTime().toString(16)+Math.floor(Math.random()*1e16).toString(16);
+    redisClient.ZRANGEBYSCORE("Position:longitude",corner[0].longitude,corner[1].longitude,function (err,reply) {
+    	if(reply.length>0){
+    		//get the longitude set
+    		redisClient.SADD("Position:temp:longitude:"+check,reply);
+    		redisClient.ZRANGEBYSCORE("Position:latitude",corner[1].latitude,corner[0].latitude,function (err,reply) {
+    			if(reply.length>0){
+    				//get the latitude set
+    				redisClient.SADD("Position:temp:latitude:"+check,reply,function (err,reply) {
+    					if(reply>0){
+    						//get the inter uid
+    						redisClient.SINTER("Position:temp:longitude:"+check,"Position:temp:latitude:"+check,function (err,reply) {
+    							callback(true,0,reply);
+    							//clean the temp set
+    							redisClient.DEL("Position:temp:longitude:"+check);
+    							redisClient.DEL("Position:temp:latitude:"+check);
+    						});
+    					}
+    				});
+    			}
+    		});
+    	}
+    });
+	/*pool.getConnection(function (err,connection) {
 		// select user_id
 		var sql = [],sqlString;
 		sql[0] = "SELECT userId,longitude,latitude FROM position WHERE longitude>";
@@ -222,6 +808,136 @@ function getUserByCoordinate (corner,callback) {
 		});
 
 		connection.release();
+	});*/
+}
+
+//income
+//longitude,latitude,scale
+//------------------------------------------------
+//output
+//messageId(s)
+function getMessageByCoordinate (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// check corner
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	fields.deltaLong = fields.scale/60/Math.cos(fields.latitude/90);//about fields.scale km
+	fields.deltaLa = fields.scale/60;//about fields.scale km
+
+	getDifferentMessageByCoordinate(fields,"help",function (state,err,result){
+		callback(true);
+	});
+}
+
+//income
+//longitude,latitude,scale，check,delta
+//------------------------------------------------
+//output
+//helpId(s)
+function getDifferentMessageByCoordinate (fields,kind,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// check corner
+	if(utils.isDataExistNull(fields) || utils.isDataExistNull(kind)){
+		callback(false,1048);
+		return;
+	}
+	
+	redisClient.ZRANGEBYSCORE("Position:message:"+kind+":longitude",
+		fields.longitude-fields.deltaLong,
+		fields.longitude+fields.longitude,
+		function (err,reply){
+		if(reply.length>0){
+			redisClient.SADD("Position:message:temp:"+kind+":longitude:"+fields.check,reply);
+			redisClient.ZRANGEBYSCORE("Position:message:"+kind+":latitude",
+				fields.latitude-fields.deltaLa,
+				fields.latitude+fields.deltaLa,
+				function (err,reply){
+				if(reply.length>0){
+					redisClient.SADD("Position:message:temp:"+kind+":latitude:"+fields.check,reply,function (err,reply){
+						redisClient.SINTERSTORE("Position:message:temp:"+kind+":"+fields.check,
+							"Position:message:temp:"+kind+":longitude:"+fields.check,
+							"Position:message:temp:"+kind+":latitude:"+fields.check,function (err,reply){
+								callback(true,0,reply);
+							});
+						redisClient.DEL("Position:message:temp:"+kind+":longitude:"+fields.check);
+						redisClient.DEL("Position:message:temp:"+kind+":latitude:"+fields.check);
+					});
+				} else callback(false,"null");
+			});
+		} else callback(false,"null");
+	});		
+}
+
+function getMessageByLocation (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	// check corner
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	fields.check=new Date().getTime().toString(16) + Math.floor(Math.random()*1e16).toString(16);
+	var toGet = function(state,error_code,result){
+		if(state){
+			redisClient.SUNIONSTORE("Message:temp:"+fields.check,"Live:message:temp:help:"+fields.check,"Position:message:temp:help:"+fields.check,function (err,reply){
+				if(reply>0){
+					ZtoS("Message:receive:help:"+fields.userId,"Message:receive:help:temp:"+fields.userId,function (state,err){
+						redisClient.SDIFF("Message:temp:"+fields.check,"Message:receive:help:temp:"+fields.userId,"Samaritan:help:accept:"+fields.userId,function (err,reply){
+							getMessageByMessageId(reply,function(state,err,reply){
+								getUMStateByMessageId(fields.userId,reply,function(state,err,reply){
+									reply.sort(function (a,b){ return b.time - a.time;});//sort by time,from big to small
+									console.log(reply);
+									callback(true,0,reply);
+								});
+							});
+							redisClient.DEL("Message:temp:"+fields.check);
+							redisClient.DEL("Message:receive:help:temp"+fields.userId);
+						});
+					});
+				} else {
+					callback(false,null);
+				}
+				redisClient.DEL("Position:message:temp:help:"+fields.check);
+				redisClient.DEL("Live:message:temp:help:"+fields.check);
+			});
+		} else {
+			callback(false,error_code);
+		}
+	}
+
+	// check the code
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+	
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+	redisClient.ZRANGEBYSCORE("Live:message:help","-inf",fields.timeLimit,function (err,reply){
+		if(reply.length>0){
+			redisClient.SADD("Live:message:temp:help:"+fields.check,reply,function (err,reply){
+				if(fields.scale === 0){
+					getMessageByCode(fields,toGet);
+				} else {
+					getMessageByCoordinate(fields,toGet);
+				}
+			});
+		}
+	});
 	});
 }
 
@@ -230,7 +946,11 @@ function getUserByCoordinate (corner,callback) {
 //------------------------------------------------
 //output
 //all info
-function getInfoById (userId,callback) {
+function getInfoByUserId (userId,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	// body...
 	if(utils.isDataExistNull(userId)){
 		callback(false,1048);
@@ -256,13 +976,24 @@ function getInfoById (userId,callback) {
 //income
 //sessionId
 function deleteSession (sessionId,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
 	//check sessionId
 	if(utils.isDataExistNull(sessionId)){
 		callback(false,1048);
 		return;
 	}
 
-	pool.getConnection(function (err,connection){
+	redisClient.DEL("Session:"+sessionId,function (err,reply){
+		if(!err){
+			callback(true);
+		} else {
+			callback(false,1);
+		}
+	});
+	/*pool.getConnection(function (err,connection){
 		connection.query("DELETE FROM session WHERE sessionId = "+connection.escape(sessionId),function (err1,rows){
 			if(err1){
 				callback(false,err1.errno);
@@ -273,6 +1004,265 @@ function deleteSession (sessionId,callback) {
 		});
 
 		connection.release();
+	});*/
+}
+
+//income
+//userId,toFollowPhone
+function followUser (fields,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+	
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+    getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+	getIdByPhone(fields.follow,function (state,err,reply) {
+		// body...
+		if(state){
+			fields.follow = reply;
+			//set people concerned
+			redisClient.SADD("Relation:concerned:"+fields.userId,fields.follow);
+			//set follower
+			redisClient.SADD("Relation:follow:"+fields.follow,fields.userId);
+			callback(true);
+		}
+	});
+	});
+}
+
+//--------------------------------------------------
+//these handlers is utils of database handler
+//we usually use these handler only in this module
+//--------------------------------------------------
+
+//income
+// phone
+//--------------------------------------------------
+//output
+//userId
+function getIdByPhone (cellPhone,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(cellPhone)){
+		callback(false,1048);
+		return
+	}
+
+    // use pid set
+    var pid = parseInt(cellPhone).toString(16);
+    //check if the phone has been registered
+    redisClient.GET("Pid:"+pid,function (err, reply) {
+    	callback(true,0,reply);
+    });
+}
+
+//income
+//messageId(s)
+//--------------------------------------------------
+//output
+//userId
+function getMessageByMessageId (messageId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(messageId)){
+		callback(false,1048,[]);
+		return;
+	}
+
+	var result = [];
+	
+	for(var i=messageId.length-1;i>-1;i--){
+		//use closure
+		(function (j) {
+			var kind;
+			switch(messageId[j][1]){
+				case "h":kind = "help";break;
+			}
+
+			redisClient.HGETALL("Message:"+kind+":"+messageId[j],function (err,reply){
+				if(reply !== null){
+					//use push
+					//because it's sort from big to small
+					//big time means newest
+					console.log(messageId[j]);
+					reply.messageId = messageId[j];
+					result.push(reply);
+				}
+				if(j === 0){
+					callback(true,0,result);
+				}
+			});
+		})(i);
+	}
+}
+
+//--------------------------------------------------
+//to get the user have not offer help to the message
+//--------------------------------------------------
+//income
+//message,userId
+//--------------------------------------------------
+//output
+//UMState
+function getUMStateByMessageId(userId,message,callback){
+	//0--user has no relation with message
+	//1--user and asker both accept
+	//2--user accept and asker do not accept
+	//3--user do not accpet and asker accpet
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(message) || utils.isDataExistNull(userId)){
+		callback(false,1048);
+		return;
+	}
+
+	var finishQuest = 0;
+	finish = function(){
+		finishQuest++;
+		if(finishQuest === message.length){
+			callback(true,0,message);
+		}
+	}
+
+	for(var i=message.length-1;i>-1;i--){
+		//use closure
+		(function (j) {
+			switch(message[j].messageId[1]){
+				case "h":
+				redisClient.SISMEMBER("Group:help:accept:"+message[j].messageId,userId,function (err,reply){
+					if(reply === 1){
+						message[j].UMState = "1";
+						finish();
+					} else {
+						redisClient.SISMEMBER("Group:help:wait:"+message[j].messageId,userId,function (err,reply){
+							if(reply === 1){
+								message[j].UMState = "2";
+								finish();
+							} else {
+								redisClient.ZRANK("Message:receive:help:"+userId,message[j].messageId,function (err,reply){
+									console.log(reply+"h="+j);
+									console.log(message[j]);
+									if(reply !== null){
+										message[j].UMState = "3";
+									} else {
+										message[j].UMState = "0";
+									}
+									finish();	
+								});
+							}
+						});
+					}
+				});
+				break;
+			}
+		})(i);
+	}
+}
+
+//input
+//messageId
+//----------------------------------------------------------------
+//output
+//accept group
+function getAcceptGroupByMessageId (messageId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(messageId)){
+		callback(false,1048);
+		return;
+	}
+
+	redisClient.SMEMBERS("Group:help:accept:"+messageId,function (err,reply){
+		if(!err){
+			callback(true,0,reply);
+		} else {
+			callback(false,err);
+		}
+	});
+}
+
+//input
+//messageId
+//----------------------------------------------------------------
+//output
+//wait group
+function getWaitGroupByMessageId (messageId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(messageId)){
+		callback(false,1048);
+		return;
+	}
+
+	redisClient.SMEMBERS("Group:help:wait:"+messageId,function (err,reply){
+		if(!err){
+			callback(true,0,reply);
+		} else {
+			callback(false,err);
+		}
+	});
+}
+
+//--------------------------------------------------
+//to clean the message position record an hour
+//--------------------------------------------------
+function cleanMessagePosition(){
+	var now = new Date().getTime();
+	console.log("clean!!");
+	redisClient.ZRANGEBYSCORE("Live:message:help","-inf",now-1000*60*60,function (err,reply){
+		if(reply.length>0){
+			console.log("reply-->"+reply);
+			for(var i=reply.length-1;i>-1;i--){
+				redisClient.ZREM("Position:message:help:code",reply[i]);
+				redisClient.ZREM("Position:message:help:longitude",reply[i]);
+				redisClient.ZREM("Position:message:help:latitude",reply[i]);
+				redisClient.ZREM("Live:message:help",reply[i]);
+			}
+		}
+	});
+}
+
+//--------------------------------------------------
+//to change Sorted set to set
+//--------------------------------------------------
+//income 
+//two key
+function ZtoS (zkey,skey,callback) {
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(zkey) || utils.isDataExistNull(skey)){
+		callback(false,1048);
+		return;
+	}
+	console.log("zkey="+zkey);
+
+	redisClient.ZRANGEBYSCORE(zkey,"-inf","+inf",function (err,reply){
+		if(reply.length>0){
+			redisClient.SADD(skey,reply,function (err,reply){
+				callback(true);
+			});
+		} else {
+			callback(false,null);
+		}
 	});
 }
 
@@ -287,12 +1277,36 @@ exports.getAllUser = getAllUser;
 
 exports.registerUser = registerUser;
 exports.loginUser = loginUser;
+exports.logoutUser = logoutUser;
 
 exports.setSession = setSession;
+exports.refleshSession = refleshSession;
 exports.getIdFromSession = getIdFromSession;
 exports.deleteSession = deleteSession;
 
 exports.getUserByCode = getUserByCode;
 exports.getUserByCoordinate = getUserByCoordinate;
+exports.getMessageByCode = getMessageByCode;
+exports.getMessageByCoordinate = getMessageByCoordinate;
+exports.getMessageByLocation = getMessageByLocation;
+exports.setPosition = setPosition;
 
-exports.getInfoById = getInfoById;
+exports.sendHelp = sendHelp;
+exports.offerHelp = offerHelp;
+exports.refuseToHelp = refuseToHelp;
+exports.getReceiveById = getReceiveById;
+exports.acceptHelp = acceptHelp;
+exports.ignoreHelp = ignoreHelp;
+
+exports.followUser = followUser;
+
+exports.getInfoByUserId = getInfoByUserId;
+
+exports.getIdByPhone = getIdByPhone;
+exports.getMessageByMessageId = getMessageByMessageId;
+exports.getUMStateByMessageId = getUMStateByMessageId;
+exports.getAcceptGroupByMessageId = getAcceptGroupByMessageId;
+exports.getWaitGroupByMessageId = getWaitGroupByMessageId;
+
+
+exports.cleanMessagePosition = cleanMessagePosition;

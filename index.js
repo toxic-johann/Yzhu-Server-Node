@@ -20,18 +20,50 @@ var handle = {
 		'/image':requestHandlers.imagePost,
 		'/upload':requestHandlers.uploadPost,
 		'/login':requestHandlers.loginPost,
+		'/logout':requestHandlers.logoutPost,
 		'/register':requestHandlers.registerPost
 	},
 
 	"api":{
 		"forPost":{
 			"discover":{
-				"finduser":requestHandlers.findUserInAreaPost
+				"setposition":requestHandlers.setPositionPost,
+				"finduser":requestHandlers.findUserInAreaPost,
+				"findmessage":requestHandlers.findMessageInAreaPost,
+			},
+			"message":{
+				"sendhelp":requestHandlers.sendHelpPost,
+				"offerhelp":requestHandlers.offerHelpPost,
+				"receive":requestHandlers.myReceivePost,//the message push to me
+				"refusetohelp":requestHandlers.refuseToHelpPost,
+				"helpinfo":requestHandlers.helpInfoPost
+			},
+			"group":{
+				"accept":requestHandlers.acceptGroupPost,
+				"wait":requestHandlers.waitGroupPost,
+				"accepthelp":requestHandlers.acceptHelpPost,
+				"ignorehelp":requestHandlers.ignoreHelpPost
+			},
+			"user":{
+				"userinfo":requestHandlers.userInfoPost
+			},
+			"relation":{
+				"tofollow":requestHandlers.toFollowPost
 			}
 		},
 		"discover":{
-			"finduser":requestHandlers.findUserInArea
-		}	
+			"setposition":requestHandlers.setPosition,
+			"finduser":requestHandlers.findUserInArea,
+			"findmessage":requestHandlers.findMessageInArea
+		},
+		"message":{
+			"sendhelp":requestHandlers.sendHelp,
+			"receive":requestHandlers.myReceive,
+			"help":requestHandlers.theHelp
+		},
+		"relation":{
+			"tofollow":requestHandlers.toFollow
+		}
 	}
 };
 console.dir(["handle",handle]);

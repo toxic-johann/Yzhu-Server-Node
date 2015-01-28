@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Discover find message</title>
+</head>
+<body>
+	<input type="button" id="areaSend" value="提交范围">
+    <div id="show"></div>
+	<script src="/lib/wrox.js"></script>
+	<script>
+		function sendAreaHandler () {
+        // body...
+
+        var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+        onProgress = function(e){
+          if(e.lengthComputable){
+            //on the progess time
+            var percentComplere = (e.loaded/e.total)*100;
+          }
+        },
+        onReady = function(e){
+          //ready state
+           if(this.readyState==4 && this.status==200 ){
+           	if(xmlhttp.responseText === "nothing"){
+           		document.getElementById('show').innerHTML = "nothing";
+           	} else {
+           		var result = JSON.parse(xmlhttp.responseText),
+	         	len = result.messages.length,
+	         	toShow = document.getElementById('show'),
+	         	tempText = [];
+	         	console.log(result);
+	          	console.log(result.messages);
+
+	          	tempText.push('<ul>');
+	          	for(var i=0;i<len;i++){
+	          		tempText.push('<li>');
+	          		tempText.push(result.messages[i].content);
+	          		tempText.push(result.messages[i].time);
+	          		if(result.messages[i].state === "0"){
+	          			if(result.messages[i].UMState === "2"){
+	          				tempText.push('<input type="button" value="waited" disabled="true">');
+	          			} else {
+	          				tempText.push('<input type="button" value="offer">');
+	          			}
+	          		}
+	          		tempText.push('</li>');
+	          	}
+	          	tempText.push('</ul>');
+	          	toShow.innerHTML = toShow.innerHTML+ tempText.join("");
+	          	var inputs = document.getElementsByTagName("input");
+	          	console.log(inputs);
+	          	for(var i=inputs.length-1;i>0;i--){
+	          		(function (j){EventUtil.addHandler(inputs[i],'click',function (){
+	          			console.log("the button is "+j);
+	          			offerHelp(j,result);
+	          			});
+	          		})(i);
+	          	}
+           	}
+           	
+           }
+        },
+        onError = function(err){
+          console.log(err);
+          //output the error
+        };
+
+        xmlhttp.open("POST","/api/discover/findMessage",true);
+        var area ={userId:12345678922,
+        	longitude:113.37,
+        	latitude:23.0635,
+        	code:44011311202,
+        	scale:0,
+        	timeLimit:new Date().getTime()
+        },
+        data = JSON.stringify(area);
+        xmlhttp.addEventListener('error', onError, false);
+        xmlhttp.addEventListener('progress', onProgress, false);
+        xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data,function (result) {
+        	// body...
+        	console.log(result);
+        });
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+      }
+
+      function offerHelp (i,result){
+      	//i indicate the number of button
+      	var data = JSON.stringify({
+      		userId:"12345678922",
+      		messageId:result.messages[i-1].messageId
+      	}),
+      	xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+      	button = document.getElementsByTagName('input')[i];
+      	onReady = function (e) {
+      		// body...
+      		if(this.readyState==4 && this.status==200 ){
+         		if(xmlhttp.responseText === "1"){
+         			console.log(button);
+         			button.value = "accepted";
+         			button.disabled = true;
+         		} else if(xmlhttp.responseText === "2"){
+         			button.value = "waited";
+         			button.disabled = true;
+         		}
+          	}
+      	};
+      	xmlhttp.open("POST","/api/message/offerHelp",true);
+      	xmlhttp.setRequestHeader("Content-Type","application/json");
+        xmlhttp.send(data);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+      } 
+
+      window.onload = function(){
+        // Set one more client
+        EventUtil = Wrox.ProJS.EventUtil;
+        EventUtil.addHandler(document.getElementById("areaSend"),'click',sendAreaHandler);
+      }
+	</script>
+</body>
+</html>
