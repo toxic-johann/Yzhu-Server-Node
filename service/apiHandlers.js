@@ -72,6 +72,8 @@ function logoutPost (request,response,pathname){
 //income
 //user_name,cellPhone,password
 // handler the register
+function registerPost (request,response,pathname) {
+	// handler the register
 	var form = new formidable.IncomingForm();
 
 	form.parse(request,function (err,fields,files) {
@@ -89,6 +91,7 @@ function logoutPost (request,response,pathname){
 		});
 	});
 	return ("Post handler 'register' was called");
+}
 
 function checkPhonePost(){
 
