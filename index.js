@@ -43,7 +43,7 @@ var handle = {
 				"receive":requestHandlers.myReceivePost,//the message push to me
 				"refusetohelp":requestHandlers.refuseToHelpPost,
 				"helpinfo":requestHandlers.helpInfoPost,
-				"adkquestion":requestHandlers.askQuestionPost
+				"askquestion":requestHandlers.askQuestionPost
 			},
 			"group":{
 				"accept":requestHandlers.acceptGroupPost,

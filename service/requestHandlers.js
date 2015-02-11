@@ -618,8 +618,20 @@ function waitGroupPost (request,response,pathname){
 	return ("Post handler 'help info' was called");
 }
 
-function userInfoPost (request,response,pathname){
+//income
+function setUserInfoPost (request,response,pathname){
+	var form = new formidable.IncomingForm();
 
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		console.log(fields);
+		databaseHandlers.setUserInfo(fields,function (state,err,reply){
+			response.writeHead(200,{"Content-Type":"application/json"});
+			response.end(JSON.stringify({state:state}));
+		});
+	});
+	return ("Post handler 'to follow' was called");
 }
 
 //income
@@ -846,7 +858,7 @@ exports.myReceivePost = myReceivePost;
 exports.helpInfoPost = helpInfoPost;
 exports.acceptGroupPost = acceptGroupPost;
 exports.waitGroupPost = waitGroupPost;
-exports.userInfoPost = userInfoPost;
+exports.setUserInfoPost = setUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
 
 

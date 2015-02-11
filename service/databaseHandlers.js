@@ -1063,6 +1063,35 @@ function getInfoByUserId (userId,callback) {
 }
 
 //income
+//user info(s)
+//sex,age
+function setUserInfo(fields,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	//check sessionId
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	redisClient.HMSET("Info:user:"+fields.userId,fields,function (err,reply){
+		if(!err){
+			if(fields.age){
+				redisClient.ZADD("Info:age",fields.age,fields.userId);
+			}
+			if(fields.sex){
+				redisClient.ZADD("Info:sex",fields.sex,fields.userId);
+			}
+			callback(true);
+		} else {
+			callback(false,err);
+		}
+	});
+}
+
+//income
 //sessionId
 function deleteSession (sessionId,callback) {
 	callback = callback || function () {
@@ -1409,6 +1438,7 @@ exports.askQuestion = askQuestion;
 exports.followUser = followUser;
 
 exports.getInfoByUserId = getInfoByUserId;
+exports.setUserInfo = setUserInfo;
 
 exports.getIdByPhone = getIdByPhone;
 exports.getMessageByMessageId = getMessageByMessageId;
