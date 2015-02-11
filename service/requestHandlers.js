@@ -252,7 +252,7 @@ function registerPost (request,response,pathname) {
 	return ("Post handler 'register' was called");
 }
 
-function checkPhonePost(){
+function checkPhonePost(request,response,pathname){
 	var form = new formidable.IncomingForm();
 
 	form.parse(request,function (err,fields,files) {
