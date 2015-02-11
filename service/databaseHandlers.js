@@ -109,9 +109,9 @@ function registerUser (fields,callback) {
     		redisClient.HMSET("User:"+key,fields);
     		//set the phone->id set
     		redisClient.SET("Pid:"+pid,key);
-    		callback(true);
+    		callback(true,0,fields.cellPhone);
     	} else {
-    		callback(false,ERROR.DUPLICATE_VALUE);
+    		callback(false,ERROR.DUPLICATE_VALUE,fields.cellPhone);
     	}
     });
     //the phone and the password need to be secret!!
@@ -691,7 +691,7 @@ function loginUser (fields,callback) {
 				if(fields.password === reply){
 					setSession(fields.sessionId,fields.userId,function (state,err,reply){
 						if(state){
-							callback(true);
+							callback(true,0,fields.sessionId);
 						} else {
 							callback(false,3);
 						}

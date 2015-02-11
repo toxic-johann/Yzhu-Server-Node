@@ -200,15 +200,9 @@ function loginPost (request,response,pathname) {
 		console.log(fields);
 		fields.sessionId = request.session;
 		databaseHandlers.loginUser(fields,function (state,error_code,result) {
-			if(state){
-				console.log('success');
-				response.writeHead(200,{"content-type":"text/plain"});
-				response.end("0");
-			}
-			else{
-				response.writeHead(200,{"content-type":"text/plain"});
-				response.end(error_code.toString());
-			}
+			console.log("state:"+state);
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:error_code,session:result}));
 		});
 	});
 	return ("Post handler 'login' was called");
