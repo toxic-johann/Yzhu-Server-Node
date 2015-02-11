@@ -787,7 +787,7 @@ function compressHandle (raw,statusCode,reasonPhrase,request,response,ext){
 }
 
 function checkAPI(pathname,fields){
-	if(pathname[0] === 'api'){
+	if(pathname[1] === 'api'){
 		return JSON.parse(fields.fields);
 	} else {
 		return fields;
