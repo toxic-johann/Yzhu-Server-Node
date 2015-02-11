@@ -79,7 +79,9 @@ function registerPost (request,response,pathname) {
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
 		console.log(fields);
-		databaseHandlers.registerUser(fields.fields,function (state,error_code,reply) {
+		fields = JSON.parse(fields.fields);
+		console.log(fields);
+		databaseHandlers.registerUser(fields,function (state,error_code,reply) {
 			if(!state){
 				if(error_code === ERROR.DUPLICATE_VALUE){	
 					//dup phone
