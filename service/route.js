@@ -30,7 +30,7 @@ function route(handle,pathname,request,response){
 					console.log(state);
 					console.log(err);
 					console.log(reply);
-					if(reply !== "0"){
+					if(reply !== "0" || pathname[3] === "login"){
 						content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
 						console.log('handle content: '+content);
 						return content;
