@@ -253,7 +253,17 @@ function registerPost (request,response,pathname) {
 }
 
 function checkPhonePost(){
+	var form = new formidable.IncomingForm();
 
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		databaseHandlers.getIdByPhone(fields.cellPhone,function (state,err,reply){
+			response.writeHead(200,{"Content-Type":"application/json"});
+			response.end(JSON.stringify({registed:state}));
+		});
+	});
+	return ("Post handler 'register' was called");
 }
 //-------------------------------------------
 //api handler GET

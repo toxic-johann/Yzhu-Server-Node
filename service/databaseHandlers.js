@@ -1163,7 +1163,11 @@ function getIdByPhone (cellPhone,callback) {
     var pid = parseInt(cellPhone).toString(16);
     //check if the phone has been registered
     redisClient.GET("Pid:"+pid,function (err, reply) {
-    	callback(true,0,reply);
+    	if(!err){
+    		callback(true,0,reply);
+    	} else {
+    		callback(false);
+    	}
     });
 }
 
