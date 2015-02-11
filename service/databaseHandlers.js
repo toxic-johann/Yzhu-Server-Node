@@ -1180,7 +1180,6 @@ function getIdBySession(sessionId,callback){
 	}
 
     redisClient.GET("Session:"+sessionId,function (err, reply) {
-    	console.log(err);
     	if(!err){
     		callback(true,0,reply);
     	} else {

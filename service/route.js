@@ -27,7 +27,10 @@ function route(handle,pathname,request,response){
 		if(request.method === 'POST'){
 			if(typeof handle[pathname[1]]['forPost'][pathname[2]][pathname[3]] === 'function'){
 				getIdBySession(session.sessionId,function(state,err,reply){
-					if(reply !== 0){
+					console.log(state);
+					console.log(err);
+					console.log(reply);
+					if(reply !== null){
 						content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
 						console.log('handle content: '+content);
 						return content;
