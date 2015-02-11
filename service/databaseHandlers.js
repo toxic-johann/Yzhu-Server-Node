@@ -4,8 +4,7 @@ var mysql = require('mysql'),
 dbInfo = require('../conf/localConf.js').database,
 utils = require('./utils.js'),
 redis = require("redis"),
-redisClient = redis.createClient(),
-lock = require("redis-lock")(redisClient);
+redisClient = redis.createClient();
 
 redisClient.on("error",function (err) {
 	console.log(err);
