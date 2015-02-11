@@ -52,7 +52,7 @@ var handle = {
 				"ignorehelp":requestHandlers.ignoreHelpPost
 			},
 			"user":{
-				"userinfo":requestHandlers.userInfoPost
+				"setuserinfo":requestHandlers.setUserInfoPost
 			},
 			"relation":{
 				"tofollow":requestHandlers.toFollowPost
