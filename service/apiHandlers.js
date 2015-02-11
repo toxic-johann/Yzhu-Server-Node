@@ -38,7 +38,7 @@ function loginPost (request,response,pathname) {
 		//reflect to front
 		console.log(fields);
 		fields.sessionId = request.session;
-		databaseHandlers.loginUser(fields,function (state,error_code,result) {
+		databaseHandlers.loginUser(fields.fields,function (state,error_code,result) {
 			if(state){
 				console.log('success');
 				response.writeHead(200,{"content-type":"text/plain"});
@@ -78,6 +78,7 @@ function registerPost (request,response,pathname) {
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
+		console.log(fields);
 		databaseHandlers.registerUser(fields.fields,function (state,error_code,reply) {
 			if(!state){
 				if(error_code === ERROR.DUPLICATE_VALUE){	
