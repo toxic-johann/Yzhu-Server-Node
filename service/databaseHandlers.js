@@ -203,12 +203,20 @@ function sendHelp (fields,callback) {
 			console.log("message stream add");
 			redisClient.ZADD("Message:send:help:"+fields.userId,fields.time,mhid);
 			redisClient.ZADD("Message:type:"+fields.type,fields.time,mhid);
+			redisClient.ZADD("Timeline:help:"+mhid,fields.time,JSON.stringify({
+				userId:fields.userId,
+				behavior:"ask for help."
+			}));
 			getReceiverSet(fields,mhid,function (state,err,reply){
 				for(var i=reply.length-1;i>-1;i--){
 					console.log(reply[i]);
 					if(reply[i] == fields.userId){continue;}
 					receiveMessage(reply[i],mhid,fields.time);
 				}
+				redisClient.ZADD("Timeline:help:"+mhid,fields.time,JSON.stringify({
+				userId:fields.userId,
+				behavior:"invite someone to help him."
+			}));
 			});
 			setMessagePosition(fields,mhid);
 			callback(true);
@@ -250,6 +258,10 @@ function offerHelp (fields,callback) {
 				if(reply>0){
 					callback(true,0,1);//1 for accept
 					redisClient.SADD("Samaritan:help:accept:"+fields.userId,fields.messageId);
+					redisClient.ZADD("Timeline:help:"+fields.messageId,new Date().getTime(),JSON.stringify({
+						userId:fields.userId,
+						behavior:"accept to help"
+					}));
 				} else callback(false);
 			});
 		} else {
@@ -257,6 +269,10 @@ function offerHelp (fields,callback) {
 				if(reply>0){
 					callback(true,0,2);//2 for wait for accept
 					redisClient.SADD("Samaritan:help:wait:"+fields.userId,fields.messageId);
+					redisClient.ZADD("Timeline:help:"+fields.messageId,new Date().getTime(),JSON.stringify({
+						userId:fields.userId,
+						behavior:"is willing to help and wait for accept."
+					}));
 				} else callback(false);
 			});
 		}
@@ -308,31 +324,29 @@ function acceptHelp (fields,callback){
 			redisClient.SADD("Samaritan:help:accept:"+fields.userId,fields.messageId,function (err,reply){
 				if(!err){
 					redisClient.SADD("Group:help:accept:"+fields.messageId,fields.userId,function (err,reply){
-						console.log("f!!");
 						if(!err){
 							redisClient.ZADD("Message:receive:help:"+fields.userId,new Date().getTime(),fields.messageId,function (err,reply){
 								console.log(fields.userId);
-								console.log("e!!");
 								if(!err){
 									callback(true);
+									redisClient.ZADD("Timeline:help:"+fields.messageId,new Date().getTime(),JSON.stringify({
+										userId:fields.userId,
+										behavior:"help was accepted"
+									}));
 								} else {
 									callback(false);
-									console.log("a!!");
 								}
 							});
 						} else {
 							callback(false);
-							console.log("b!!");
 						}
 					});
 				} else {
 					callback(false);
-					console.log("c!!");
 				}
 			});
 		} else {
 			callback(false);
-			console.log("d!!");
 		}
 	});
 }
@@ -367,6 +381,48 @@ function ignoreHelp (fields,callback){
 		} else {
 			callback(false);
 		}
+	});
+}
+
+function askQuestion(fields,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	// body...
+	if(utils.isDataExistNull(fields)){
+		callback(false,1048);
+		return;
+	}
+
+	var mqid = "Mqid"+ new Date().getTime().toString(16)+Math.floor(Math.random()*1e16).toString(16);
+	fields.time = new Date().getTime();
+	fields.state = 0;//indicate no help accept
+
+	getIdByPhone(fields.userId,function (state,err,reply) {
+		// body...
+		//use for test so do nor tab
+		fields.userId = reply;
+	redisClient.HMSET("Message:question:"+mqid,fields,function (err,reply) {
+		if(reply === "OK"){
+			//key do not exist
+			console.log("message stream add");
+			redisClient.ZADD("Message:send:question:"+fields.userId,fields.time,mqid);
+			redisClient.ZADD("Message:type:"+fields.type,fields.time,mqid);
+			getReceiverSet(fields,mqid,function (state,err,reply){
+				for(var i=reply.length-1;i>-1;i--){
+					console.log(reply[i]);
+					if(reply[i] == fields.userId){continue;}
+					receiveMessage(reply[i],mqid,fields.time);
+				}
+			});
+			setMessagePosition(fields,mqid);
+			callback(true);
+		} else {
+			console.log("this is reply --> "+reply.toString());
+			callback(false);
+		}
+	});
 	});
 }
 
@@ -489,6 +545,27 @@ function getUserNearbySet (fields,check,callback) {
 }
 
 //income
+//userId
+function getFollowerSet(userId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(userId)){
+		callback(false,1048);
+		return;
+	}
+
+	redisClient.SMEMBERS("Relation:follow:"+userId,function(err,reply){
+		if(!err){
+			callback(true,0,reply);
+		} else {
+			callback(false);
+		}
+	});
+}
+
+//income
 //userId,messageId
 function receiveMessage (userId,messageId,time,callback) {
 	callback = callback || function () {
@@ -500,15 +577,16 @@ function receiveMessage (userId,messageId,time,callback) {
 		return;
 	}
 
+	var kind;
 	switch(messageId[1]){
-		case "h":
-		redisClient.ZADD("Message:receive:help:"+userId,time,messageId,function (err,reply){
-			if(reply === 1){
-				callback(true);
-			}
-		});
-		break;
+		case "h":kind="help";break;
+		case "q":kind="question";break;
 	}
+	redisClient.ZADD("Message:receive:"+kind+":"+userId,time,messageId,function (err,reply){
+		if(reply === 1){
+			callback(true);
+		}		
+	});
 }
 
 
@@ -569,17 +647,18 @@ function setMessagePosition (fields,messageId,callback) {
 		return;
 	}
 
+	var kind;
 	switch(messageId[1]){
-		case "h":
-		//add new position index
-		redisClient.ZADD("Position:message:help:longitude",fields.longitude,messageId);
-		redisClient.ZADD("Position:message:help:latitude",fields.latitude,messageId);
-		redisClient.ZADD("Position:message:help:code",fields.code,messageId);
-
-		//add time index to delete!
-		redisClient.ZADD("Live:message:help",fields.time,messageId);
-		break;
+		case "h":kind = "help";break;
+		case "q":kind = "question";break;
 	}
+	//add new position index
+	redisClient.ZADD("Position:message:"+kind+":longitude",fields.longitude,messageId);
+	redisClient.ZADD("Position:message:"+kind+":latitude",fields.latitude,messageId);
+	redisClient.ZADD("Position:message:"+kind+":code",fields.code,messageId);
+
+	//add time index to delete!
+	redisClient.ZADD("Live:message:"+kind,fields.time,messageId);
 	callback(true);
 }
 
@@ -735,9 +814,9 @@ function getMessageByCode (fields,callback) {
 		// nothing
 	};
 
-	redisClient.ZRANGEBYSCORE("Position:message:help:code",fields.code,fields.code,function (err,reply){
+	redisClient.ZRANGEBYSCORE("Position:message:"+fields.kind+":code",fields.code,fields.code,function (err,reply){
 		if(reply.length>0){
-			redisClient.SADD("Position:message:temp:help:"+fields.check,reply,function (err){
+			redisClient.SADD("Position:message:temp:"+fields.kind+":"+fields.check,reply,function (err){
 				callback(true,err);
 			});
 		} else {
@@ -840,7 +919,7 @@ function getMessageByCoordinate (fields,callback) {
 //------------------------------------------------
 //output
 //helpId(s)
-function getDifferentMessageByCoordinate (fields,kind,callback) {
+function getDifferentMessageByCoordinate (fields,callback) {
 	callback = callback || function () {
 		// nothing
 	};
@@ -850,6 +929,8 @@ function getDifferentMessageByCoordinate (fields,kind,callback) {
 		callback(false,1048);
 		return;
 	}
+
+	var kind = fields.kind;
 	
 	redisClient.ZRANGEBYSCORE("Position:message:"+kind+":longitude",
 		fields.longitude-fields.deltaLong,
@@ -877,7 +958,7 @@ function getDifferentMessageByCoordinate (fields,kind,callback) {
 	});		
 }
 
-function getMessageByLocation (fields,callback) {
+function getHelpByLocation (fields,callback) {
 	callback = callback || function () {
 		// nothing
 	};
@@ -889,6 +970,7 @@ function getMessageByLocation (fields,callback) {
 	}
 
 	fields.check=new Date().getTime().toString(16) + Math.floor(Math.random()*1e16).toString(16);
+	fields.kind = help;
 	var toGet = function(state,error_code,result){
 		if(state){
 			redisClient.SUNIONSTORE("Message:temp:"+fields.check,"Live:message:temp:help:"+fields.check,"Position:message:temp:help:"+fields.check,function (err,reply){
@@ -1088,6 +1170,7 @@ function getMessageByMessageId (messageId,callback){
 			var kind;
 			switch(messageId[j][1]){
 				case "h":kind = "help";break;
+				case "q":kind = "question";break;
 			}
 
 			redisClient.HGETALL("Message:"+kind+":"+messageId[j],function (err,reply){
@@ -1288,7 +1371,7 @@ exports.getUserByCode = getUserByCode;
 exports.getUserByCoordinate = getUserByCoordinate;
 exports.getMessageByCode = getMessageByCode;
 exports.getMessageByCoordinate = getMessageByCoordinate;
-exports.getMessageByLocation = getMessageByLocation;
+exports.getHelpByLocation = getHelpByLocation;
 exports.setPosition = setPosition;
 
 exports.sendHelp = sendHelp;
@@ -1297,6 +1380,7 @@ exports.refuseToHelp = refuseToHelp;
 exports.getReceiveById = getReceiveById;
 exports.acceptHelp = acceptHelp;
 exports.ignoreHelp = ignoreHelp;
+exports.askQuestion = askQuestion;
 
 exports.followUser = followUser;
 
@@ -1307,6 +1391,9 @@ exports.getMessageByMessageId = getMessageByMessageId;
 exports.getUMStateByMessageId = getUMStateByMessageId;
 exports.getAcceptGroupByMessageId = getAcceptGroupByMessageId;
 exports.getWaitGroupByMessageId = getWaitGroupByMessageId;
+
+exports.getUserNearbySet = getUserNearbySet;
+exports.getFollowerSet = getFollowerSet;
 
 
 exports.cleanMessagePosition = cleanMessagePosition;

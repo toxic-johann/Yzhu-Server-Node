@@ -12,7 +12,8 @@ querystring = require("querystring"),
 util = require("util"),
 //mongoose = require("mongoose"),
 //i give up the mongodb
-databaseHandlers = require("./databaseHandlers.js");
+databaseHandlers = require("./databaseHandlers.js"),
+pushHandlers = require("./pushHandlers");
 
 function login (request,response,pathname,register) {
 	// body...
@@ -116,42 +117,53 @@ function imagePost (request,response,pathname) {
 	var form = new formidable.IncomingForm(),
 	uploadPath;
 
-	form.uploadDir = './tmp';//the path for temp
+	var today = new Date()
+	,dir = [];
+	dir.push("./image");
+	dir.push(today.getFullYear());
+	dir.push(today.getMonth()+1);
+	dir.push(today.getDate());
+	dir = dir.join("/");
+	console.log(dir);
+	utils.mkdirs(dir,0777,function (){
+		form.uploadDir = dir;//the path for temp
 
-	form.on('error',function(err){
-		console.log(err);//output the error
-	});
+		form.on('error',function(err){
+			console.log(err);//output the error
+		});
 
 
-	//to parse the request
-	form.parse(request,function(err, fields, files) {
-		response.writeHead(200, {'content-type': 'text/plain'});
-		response.write('received upload:\n\n');
-		try{
-			//there is a bug for formidable
-			//it will create an empty temp file
-			//if there is no file upload
-			//if(files.uploadFile.size === 0){
+		//to parse the request
+		form.parse(request,function(err, fields, files) {
+			response.writeHead(200, {'content-type': 'text/plain'});
+			response.write('received upload:\n\n');
+			try{
+				//there is a bug for formidable
+				//it will create an empty temp file
 				//if there is no file upload
-				//delete the temp file
-			//	fs.unlinkSync(files.uploadFile.path);
-			//} else {
-			//this bug repair by add something
-			//in formidable-incoming_form.js
-			//on 183 line
-			fs.renameSync(files.uploadFile.path,  './tmp/' + files.uploadFile.name);
-			//}
-			
-		} catch(err) {
-			console.log(err);
-		}
-		response.end(JSON.stringify({fields: fields, files: files}));
-		console.log("parse done");
-		console.log(fields);
-		console.log(files);
-    });
+				//if(files.uploadFile.size === 0){
+					//if there is no file upload
+					//delete the temp file
+				//	fs.unlinkSync(files.uploadFile.path);
+				//} else {
+				//this bug repair by add something
+				//in formidable-incoming_form.js
+				//on 183 line
+				
+					fs.renameSync(files.uploadFile.path,  dir + '/' + files.uploadFile.name);
+				//}
+				
+			} catch(err) {
+				console.log(err);
+			}
+			response.end(JSON.stringify({fields: fields, files: files}));
+			console.log("parse done");
+			console.log(fields);
+			console.log(files);
+	    });
 
-	return("POST handler 'image' was called");
+		return("POST handler 'image' was called");
+	});
 }
 
 function uploadPost (request,response,pathname) {
@@ -165,7 +177,7 @@ function uploadPost (request,response,pathname) {
       console.log(fields);
     });
 
-	return("POST handler 'image' was called");
+	return("POST handler 'upload' was called");
 }
 
 //income
@@ -399,6 +411,26 @@ function setPositionPost (request,response,pathname) {
 	return ("Post handler 'set position' was called");
 }
 
+function askQuestionPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		console.log(fields);
+		databaseHandlers.askQuestion(fields,function (state,err) {
+			if(state){
+				sendHelp(request,response,pathname);
+				databaseHandlers.getFollowerSet(fields.userId,function(state,err,reply){
+					if(state){
+						pushHandlers.pushNotification(fields.userId+" ask you for help!!",reply);
+					}
+				});
+			}
+		});
+	});
+	return ("Post handler 'send help' was called");
+}
+
 //income
 //userId,content,type
 function sendHelpPost (request,response,pathname) {
@@ -408,12 +440,16 @@ function sendHelpPost (request,response,pathname) {
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
 		console.log(fields);
-		databaseHandlers.sendHelp(fields,function (state,err) {
+		databaseHandlers.sendHelp(fields,function (state,err,reply) {
 			if(state){
 				sendHelp(request,response,pathname);
+				databaseHandlers.getFollowerSet(fields.userId,function(state,err,reply){
+					if(state){
+						pushHandlers.pushNotification(fields.userId+" ask you for help!!",reply);
+					}
+				});
 			}
-		})
-		
+		});
 	});
 	return ("Post handler 'send help' was called");
 }
@@ -430,12 +466,17 @@ function offerHelpPost (request,response,pathname) {
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end(reply.toString());	
+				if(reply === 1){
+					pushHandlers.pushNotification(fields.userId+" decide to help you.",fields.caller);
+				} else if(reply === 1){
+					pushHandlers.pushNotification(fields.userId+" want to help you,would you accept?",fields.caller);
+				}
+				
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("failed");	
 			}
-		})
-		
+		});
 	});
 	return ("Post handler 'send help' was called");
 }
@@ -451,6 +492,7 @@ function refuseToHelpPost(request,response,pathname){
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("1");	
+				pushHandlers.pushNotification(fields.userId+" is sorry that he can't help you.",fields.caller);
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -470,6 +512,7 @@ function acceptHelpPost (request,response,pathname){
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("1");	
+				pushHandlers.pushNotification(fields.caller+" accept your help.",fields.userId);
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -488,7 +531,8 @@ function ignoreHelpPost (request,response,pathname){
 		databaseHandlers.ignoreHelp(fields,function (state,err,reply) {
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
-				response.end("1");	
+				response.end("1");
+				pushHandlers.pushNotification(fields.caller+" thanks for your kindness,but he can solve the problem now.",fields.userId);	
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -707,7 +751,7 @@ function imageSendHandle (argument) {
 				} else {
 					response.removeHeader("Content-Length");
 					response.writeHead(416,"Request Range Not Satisfiable");
-					response.end();
+					response.end();	
 				}
 			} else {
 				var raw = fs.createReadStream(realPath);
@@ -779,6 +823,7 @@ exports.helpInfoPost = helpInfoPost;
 exports.acceptGroupPost = acceptGroupPost;
 exports.waitGroupPost = waitGroupPost;
 exports.userInfoPost = userInfoPost;
+exports.askQuestionPost = askQuestionPost;
 
 
 exports.dbTest = dbTest;

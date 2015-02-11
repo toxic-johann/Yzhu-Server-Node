@@ -102,7 +102,8 @@
 		xmlhttp.open("POST","/api/message/offerHelp",true);
         var data ={
         	userId:12345678900,
-        	messageId:result.messages[i].messageId
+        	messageId:result.messages[i].messageId,
+        	caller:result.messages[i].userId
         },
         data = JSON.stringify(data);
         xmlhttp.setRequestHeader("Content-Type","application/json");
@@ -123,7 +124,8 @@
 		xmlhttp.open("POST","/api/message/RefuseToHelp",true);
         var data ={
         	userId:12345678900,
-        	messageId:result.messages[i].messageId
+        	messageId:result.messages[i].messageId,
+        	caller:result.messages[i].userId
         },
         data = JSON.stringify(data);
         console.log(data);

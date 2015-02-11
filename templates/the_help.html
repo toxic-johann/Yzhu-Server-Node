@@ -6,12 +6,52 @@
 </head>
 <body>
 	<div id="show"></div>
+	<div id="chatSpace">
+		<ul id="record"></ul>
+		<p id="talk"><input type="text"><input type="button" value="send"></p>
+	</div>
 </body>
 <script src="/lib/wrox.js"></script>
+<script src="/primus/primus.js"></script>
 <script>
 	var Info = {
 		messageId:"{{messageId}}".replace(/^\w/,"M"),//change the first word,
 		EventUtil:Wrox.ProJS.EventUtil
+	}
+	function client(){
+		var primus = Primus.connect('ws://localhost:3333',{
+			reconnect: {
+			max: Infinity,// Number: The max delay before we try to reconnect.
+    		min: 500,// Number: The minimum delay before we try reconnect.
+   			retries: 10 // Number: How many times we shoult try to reconnect.
+  			}});
+
+		this.joinRoom = function (){
+			primus.write({action:"join",room:Info.messageId});
+		};
+
+		this.send = function (){
+			var message = document.getElementById("talk").getElementsByTagName("input")[0];
+			primus.write({room:Info.messageId,message:message.value});
+			message.value = "";
+		};
+
+		this.leaveRoom =function (room){
+			primus.write({action:'leave',room:room});
+		};
+
+		primus.on('data',function(message){
+			console.log(message);
+			var tempText = [];
+			tempText.push("<li>");
+			tempText.push(new Date().toTimeString()+"  ");
+			tempText.push(message.uid + ":");
+			tempText.push("</li>");
+			tempText.push("<li>");
+			tempText.push(message.message);
+			tempText.push("</li>");
+			document.getElementById('record').innerHTML += tempText.join("");
+        });	
 	}
 	function getHelpInfo(){
 		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
@@ -130,7 +170,8 @@
 		xmlhttp.open("POST","/api/group/acceptHelp",true);
         var data ={
         	messageId:Info.messageId,
-        	userId:userId
+        	userId:userId,
+        	caller:"12234"
         },
         data = JSON.stringify(data);
         xmlhttp.setRequestHeader("Content-Type","application/json");
@@ -151,7 +192,8 @@
 		xmlhttp.open("POST","/api/group/ignoreHelp",true);
         var data ={
         	messageId:Info.messageId,
-        	userId:userId
+        	userId:userId,
+        	caller:"12234"
         },
         data = JSON.stringify(data);
         xmlhttp.setRequestHeader("Content-Type","application/json");
@@ -164,6 +206,10 @@
 		getAcceptGroup();
 		getWaitGroup();
 		console.log(Info.messageId);
+
+		var chat = new client();
+		chat.joinRoom();
+		Info.EventUtil.addHandler(document.getElementById("talk").getElementsByTagName("input")[1],"click",chat.send); 
 	}
 </script>
 </html>

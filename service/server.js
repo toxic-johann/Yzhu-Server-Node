@@ -59,25 +59,20 @@ function start (route,handle) {
 			data = data||{};
 			var action = data.action,
 			room = data.room,
-			message = data.msg;
-			console.log('data received')
-			console.log(spark.Spark);
+			message = data.message;
+			console.log('data received');
 
 			if('join' === action){
 				spark.join(room,function(){
 					//send message to this client
-					spark.uid = data.id;
-					spark.write('you joined room '+room);
-
-					//send message to all clients expect this one
-					spark.room(room).write('test');
-					spark.room(room).except(spark.uid).write(spark.uid+'joined room' +room);
+					//spark.uid = data.id;
+					spark.room(room).write({uid:"system",message:spark.id+' joined room ' +room});
 				});
 			}
 
 
 			//check if spark is already in this room
-			if(~spark.rooms().indexOf(room)){
+			else if(~spark.rooms().indexOf(room)){
 				send();
 				console.log(message+'***');
 			}else{
@@ -90,8 +85,7 @@ function start (route,handle) {
 
 			//send to all clients in the room
 			function send(){
-				console.log(spark.id);
-				spark.room(room).except(spark.id).write(message);
+				spark.room(room)/*.except(spark.id)*/.write({uid:spark.id,message:message});
 			}
 		});
 	});

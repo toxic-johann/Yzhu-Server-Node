@@ -48,3 +48,7 @@ node_modules/
 
 #config on the local file
 conf/localConf.js
+
+#upload and tmp file
+upload/
+tmp/

@@ -2,6 +2,9 @@
 save for some utils for backstage
 */
 
+var fs = require('fs'),
+path = require('path');
+
 //determine the range request
 //Range: bytes=[start]-[end][,[start]-[end]]
 /*
@@ -96,3 +99,24 @@ exports.selectRandomAndUnique = function (object,num) {
 	}
 	return result;
 }
+
+var mkdirs = module.exports.mkdirs = function(dirpath, mode, callback) {
+    fs.exists(dirpath, function(exists) {
+        if(exists) {
+        	//check if set
+        	callback(dirpath);
+        } else {
+        	//check if parent set
+        	fs.exists(path.dirname(dirpath), function(exists) {
+        		if(exists){
+        			fs.mkdir(dirpath, mode, callback);
+        		}
+        		else{
+        			mkdirs(path.dirname(dirpath), mode, function(){
+            			fs.mkdir(dirpath, mode, callback);
+                	});
+        		}
+        	});
+        }
+    });
+};
