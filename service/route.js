@@ -5,7 +5,8 @@ pass the response object to handler module
 return the answer to the page ot handle it
 */
 var SessionHandler = require("./sessionHandlers.js").sessionHandler,
-sessionHandler = new SessionHandler();
+sessionHandler = new SessionHandler(),
+getIdBySession = new require("./databaseHandlers.js").getIdBySession;
 
 function route(handle,pathname,request,response){
 	var the_path = '/'+pathname[1];
@@ -25,9 +26,13 @@ function route(handle,pathname,request,response){
 		var content;
 		if(request.method === 'POST'){
 			if(typeof handle[pathname[1]]['forPost'][pathname[2]][pathname[3]] === 'function'){
-				content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
-				console.log('handle content: '+content);
-				return content;
+				getIdBySession(session.sessionId,function(state,err){
+					if(state){
+						content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
+						console.log('handle content: '+content);
+						return content;
+					} else {}
+				});
 			} else {
 				return404(request,response,pathname);
 			}
@@ -72,6 +77,13 @@ function return404 (request,response,pathname) {
 	response.write("404 not found");
 	response.end();
 	return "404 not found";
+}
+
+function notLogin(request,response,pathname) {
+	console.log("client has not login");
+	response.writeHead(401.1,{"Content-Type":"application/json"});
+	response.end(JSON.stringify({err:401.1}));
+	return "not login";
 }
 
 exports.route = route;

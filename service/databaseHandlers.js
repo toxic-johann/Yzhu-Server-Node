@@ -1033,7 +1033,7 @@ function getInfoByUserId (userId,callback) {
 }
 
 //income
-//user info(s)
+//user info(s)        
 //sex,age
 function setUserInfo(fields,callback){
 	callback = callback || function () {
