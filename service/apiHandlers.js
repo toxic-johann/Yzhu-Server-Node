@@ -71,22 +71,24 @@ function logoutPost (request,response,pathname){
 
 //income
 //user_name,cellPhone,password
-function registerPost (request,response,pathname) {
-	databaseHandlers.registerUser(fields,function (state,error_code,reply) {
-		if(!state){
-			if(error_code === ERROR.DUPLICATE_VALUE){	
-				//dup phone
-				console.log('the cell phone has been registed');
-			} else if(error_code === ERROR.NULL_VALUE){
-				//null value
-				console.log('there can not have null value');
+// handler the register
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		databaseHandlers.registerUser(fields.fields,function (state,error_code,reply) {
+			if(!state){
+				if(error_code === ERROR.DUPLICATE_VALUE){	
+					//dup phone
+					console.log('the cell phone has been registed');
+				} else if(error_code === ERROR.NULL_VALUE){
+					//null value
+					console.log('there can not have null value');
+				}
 			}
-		}
-		response.writeHead(200, {'content-type': 'application/json'});
-      	response.end(JSON.stringify({state:state, err: error_code, cellPhone:reply}));
-	});	
-	 return ("Post handler 'register' was called");
-}
+		});
+	});
+	return ("Post handler 'register' was called");
 
 function checkPhonePost(){
 
