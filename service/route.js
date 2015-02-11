@@ -86,8 +86,8 @@ function return404 (request,response,pathname) {
 
 function notLogin(request,response,pathname) {
 	console.log("client has not login");
-	response.writeHead(401.1,{"Content-Type":"application/json"});
-	response.end(JSON.stringify({err:401.1}));
+	response.writeHead(200,{"Content-Type":"application/json"});
+	response.end(JSON.stringify({err:'not login'}));
 	return "not login";
 }
 
