@@ -738,36 +738,6 @@ function logoutUser (sessionId,callback){
 	deleteSession(sessionId,callback);
 }
 
-//income
-//sessionId
-//-------------------------------
-//outcome
-//userId
-function getIdFromSession (sessionId,callback) {
-	callback = callback || function () {
-		// nothing
-	};
-
-	// check session
-	if(utils.isDataExistNull(sessionId)){
-		callback(false,ERROR.NULL_VALUE);
-		return;
-	}
-
-	pool.getConnection(function (err,connection){
-		//select user_id
-		connection.query("SELECT userId FROM session WHERE sessionId = "+connection.escape(sessionId),function (err1,rows){
-			if(err1){
-				callback(false,err1.errno);
-				console.log(err1);
-			} else{
-				callback(true,0,rows);
-			}
-		});
-
-		connection.release();
-	});
-}
 
 //income
 //code
@@ -1109,13 +1079,7 @@ function deleteSession (sessionId,callback) {
 			var userId = reply;
 			redisClient.DEL("Session:"+sessionId,function (err,reply){
 				if(!err){
-					redisClient.DEL("Session:user:"+userId,function (err,reply){
-						if(!err){
-							callback(true);
-						} else {
-							callback(false,1);
-						}
-					});
+					callback(true);
 				} else {
 					callback(false,1);
 				}
@@ -1199,6 +1163,37 @@ function getIdByPhone (cellPhone,callback) {
     	}
     });
 }
+
+//income
+//sessionId
+//--------------------------------------------------
+//outcome
+//userId
+function getIdBySession(sessionId,callback){
+	callback = callback || function () {
+		// nothing
+	};
+
+	if(utils.isDataExistNull(sessionId)){
+		callback(false,ERROR.NULL_VALUE);
+		return
+	}
+
+    redisClient.GET("Session:"+sessionId,function (err, reply) {
+    	if(!err){
+    		callback(true,0,reply);
+    	} else {
+    		callback(false);
+    	}
+    });
+}
+
+//income
+//userId
+//--------------------------------------------------
+//outcome
+//sessionId
+
 
 //income
 //messageId(s)
@@ -1417,7 +1412,6 @@ exports.logoutUser = logoutUser;
 
 exports.setSession = setSession;
 exports.refleshSession = refleshSession;
-exports.getIdFromSession = getIdFromSession;
 exports.deleteSession = deleteSession;
 
 exports.getUserByCode = getUserByCode;
@@ -1441,6 +1435,7 @@ exports.getInfoByUserId = getInfoByUserId;
 exports.setUserInfo = setUserInfo;
 
 exports.getIdByPhone = getIdByPhone;
+exports.getIdBySession = getIdBySession;
 exports.getMessageByMessageId = getMessageByMessageId;
 exports.getUMStateByMessageId = getUMStateByMessageId;
 exports.getAcceptGroupByMessageId = getAcceptGroupByMessageId;
