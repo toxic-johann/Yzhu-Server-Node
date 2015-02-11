@@ -26,6 +26,12 @@ var handle = {
 
 	"api":{
 		"forPost":{
+			"auth":{
+				"login":requestHandlers.loginPost,
+				"register":requestHandlers.registerPost,
+				"logout":requestHandlers.logoutPost,
+				"checkphone":requestHandlers.checkPhonePost
+			},
 			"discover":{
 				"setposition":requestHandlers.setPositionPost,
 				"finduser":requestHandlers.findUserInAreaPost,

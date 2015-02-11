@@ -235,7 +235,7 @@ function registerPost (request,response,pathname) {
 		// reflect to front
 		databaseHandlers.registerUser(fields,function (state,error_code) {
 			if(state){
-				login(request,response,pathname,'You have successfully registed.Try login.')
+				login(request,response,pathname,'You have successfully registed.Try login.');
 			} else {
 				if(error_code === 1062){	
 					//dup phone
@@ -245,9 +245,15 @@ function registerPost (request,response,pathname) {
 					console.log('there can not have null value');
 				}
 			}
+			response.writeHead(200, {'content-type': 'application/json'});
+      		response.end(JSON.stringify({state:state, err: error_code}));
 		});
 	});
 	return ("Post handler 'register' was called");
+}
+
+function checkPhonePost(){
+
 }
 //-------------------------------------------
 //api handler GET
@@ -799,6 +805,7 @@ exports.imagePost = imagePost;
 exports.loginPost = loginPost;
 exports.registerPost = registerPost;
 exports.logoutPost = logoutPost;
+exports.checkPhonePost = checkPhonePost;
 
 
 exports.setPosition = setPosition;
