@@ -134,10 +134,14 @@ function setSession (sessionId,userId,callback) {
 	redisClient.SET("Session:"+sessionId,userId,function (err,reply) {
 		if(!err){
 			console.log("ok");
-			redisClient.EXPIRE("Session:"+sessionId,3600,function (err,reply) {
-				console.log(reply);
+			redisClient.EXPIRE("Session:"+sessionId,3600);
+			redisClient.SET("Session:user:"+userId,sessionId,function (err,reply){
+				if(!err){
+					callback(true,0);
+				} else {
+					callback(false,err);
+				}
 			});
-			callback(true,0);
 		} else {
 			callback(false,err);
 		}
@@ -1071,9 +1075,22 @@ function deleteSession (sessionId,callback) {
 		return;
 	}
 
-	redisClient.DEL("Session:"+sessionId,function (err,reply){
+	redisClient.GET("Session:"+sessionId,function (err,reply){
 		if(!err){
-			callback(true);
+			var userId = reply;
+			redisClient.DEL("Session:"+sessionId,function (err,reply){
+				if(!err){
+					redisClient.DEL("Session:user:"+userId,function (err,reply){
+						if(!err){
+							callback(true);
+						} else {
+							callback(false,1);
+						}
+					});
+				} else {
+					callback(false,1);
+				}
+			});
 		} else {
 			callback(false,1);
 		}

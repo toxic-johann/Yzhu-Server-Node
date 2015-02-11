@@ -36,6 +36,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 		//if not exist
 		//return a new session
 		var cookie = request.headers.cookie;
+		console.log(cookie);
 		if(cookie && cookie.indexOf(cookieName) != -1){
 			//cookie found
 			var start = cookie.indexOf(cookieName) + cookieName.length + 1;
