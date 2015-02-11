@@ -27,10 +27,10 @@ var handle = {
 	"api":{
 		"forPost":{
 			"auth":{
-				"login":apiHandlers.loginPost,
-				"register":apiHandlers.registerPost,
-				"logout":apiHandlers.logoutPost,
-				"checkphone":apiHandlers.checkPhonePost
+				"login":requestHandlers.loginPost,
+				"register":requestHandlers.registerPost,
+				"logout":requestHandlers.logoutPost,
+				"checkphone":requestHandlers.checkPhonePost
 			},
 			"discover":{
 				"setposition":requestHandlers.setPositionPost,

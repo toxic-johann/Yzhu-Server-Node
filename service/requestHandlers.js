@@ -196,6 +196,7 @@ function loginPost (request,response,pathname) {
 
 	form.parse(request,function(err,fields,files){
 		//reflect to front
+		fields = checkAPI(pathname,fields);
 		console.log(fields);
 		fields.sessionId = request.session;
 		databaseHandlers.loginUser(fields,function (state,error_code,result) {
@@ -237,7 +238,10 @@ function registerPost (request,response,pathname) {
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
+		fields = checkAPI(pathname,fields);
 		databaseHandlers.registerUser(fields,function (state,error_code,reply) {
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
 			if(state){
 				login(request,response,pathname,'You have successfully registed.Try login.');
 			} else {
@@ -788,6 +792,13 @@ function compressHandle (raw,statusCode,reasonPhrase,request,response,ext){
 	}
 }
 
+function checkAPI(pathname,fields){
+	if(pathname[0] === 'api'){
+		return JSON.parse(fields.fields);
+	} else {
+		return fields;
+	}
+}
 /*
 -------------------------------------------
 export the module
