@@ -26,12 +26,14 @@ function route(handle,pathname,request,response){
 		var content;
 		if(request.method === 'POST'){
 			if(typeof handle[pathname[1]]['forPost'][pathname[2]][pathname[3]] === 'function'){
-				getIdBySession(session.sessionId,function(state,err){
-					if(state){
+				getIdBySession(session.sessionId,function(state,err,reply){
+					if(reply !== 0){
 						content = handle[pathname[1]]['forPost'][pathname[2]][pathname[3]](request,response,pathname);
 						console.log('handle content: '+content);
 						return content;
-					} else {}
+					} else {
+						notLogin(request,response,pathname);
+					}
 				});
 			} else {
 				return404(request,response,pathname);

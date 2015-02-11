@@ -634,7 +634,7 @@ function setUserInfoPost (request,response,pathname){
 			});
 		});
 	});
-	return ("Post handler 'to follow' was called");
+	return ("Post handler 'set user info' was called");
 }
 
 //income
