@@ -1,0 +1,5 @@
+/api/auth/register
+in:
+cellPhone,password,nickname
+out:
+state,err,cellPhone

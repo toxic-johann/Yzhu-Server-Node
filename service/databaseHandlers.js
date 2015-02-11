@@ -4,7 +4,11 @@ var mysql = require('mysql'),
 dbInfo = require('../conf/localConf.js').database,
 utils = require('./utils.js'),
 redis = require("redis"),
-redisClient = redis.createClient({auth_pass:dbInfo.password});
+redisClient = redis.createClient({auth_pass:dbInfo.password}),
+ERROR = {
+	DUPLICATE_VALUE:1062,
+	NULL_VALUE:1048
+};
 
 redisClient.on("error",function (err) {
 	console.log(err);
@@ -73,7 +77,7 @@ function registerUser (fields,callback) {
 
 	//check the fields
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -107,7 +111,7 @@ function registerUser (fields,callback) {
     		redisClient.SET("Pid:"+pid,key);
     		callback(true);
     	} else {
-    		callback(false,1062);
+    		callback(false,ERROR.DUPLICATE_VALUE);
     	}
     });
     //the phone and the password need to be secret!!
@@ -123,7 +127,7 @@ function setSession (sessionId,userId,callback) {
 	// check the input
 	console.log("set session!!!!!")
 	if(utils.isDataExistNull(sessionId) || utils.isDataExistNull(userId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -165,7 +169,7 @@ function refleshSession (sessionId,callback) {
 	};
 
 	if(utils.isDataExistNull(sessionId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 	
@@ -184,7 +188,7 @@ function sendHelp (fields,callback) {
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -240,7 +244,7 @@ function offerHelp (fields,callback) {
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -286,7 +290,7 @@ function refuseToHelp (fields,callback) {
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -313,7 +317,7 @@ function acceptHelp (fields,callback){
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -357,7 +361,7 @@ function ignoreHelp (fields,callback){
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -390,7 +394,7 @@ function askQuestion(fields,callback){
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -432,7 +436,7 @@ function getReceiveById (fields,callback) {
 	};
 
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -470,7 +474,7 @@ function getReceiverSet (fields,check,callback) {
 	};
 
 	if(utils.isDataExistNull(fields) || utils.isDataExistNull(check)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -501,7 +505,7 @@ function getUserNearbySet (fields,check,callback) {
 	};
 
 	if(utils.isDataExistNull(fields) || utils.isDataExistNull(check)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -551,7 +555,7 @@ function getFollowerSet(userId,callback){
 	};
 
 	if(utils.isDataExistNull(userId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -572,7 +576,7 @@ function receiveMessage (userId,messageId,time,callback) {
 	};
 
 	if(utils.isDataExistNull(userId) || utils.isDataExistNull(messageId) || utils.isDataExistNull(time)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -598,7 +602,7 @@ function setPosition (fields,callback) {
 
 	// body...
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -642,7 +646,7 @@ function setMessagePosition (fields,messageId,callback) {
 
 	// body...
 	if(utils.isDataExistNull(fields) || utils.isDataExistNull(messageId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -674,7 +678,7 @@ function loginUser (fields,callback) {
 
 	// check cellPhone
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -723,7 +727,7 @@ function logoutUser (sessionId,callback){
 
 	// check cellPhone
 	if(utils.isDataExistNull(sessionId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -742,7 +746,7 @@ function getIdFromSession (sessionId,callback) {
 
 	// check session
 	if(utils.isDataExistNull(sessionId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -774,7 +778,7 @@ function getUserByCode (code,callback) {
 
 	// check the code
 	if(utils.isDataExistNull(code)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -836,7 +840,7 @@ function getUserByCoordinate (corner,callback) {
 
 	// check corner
 	if(utils.isDataExistNull(corner)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -901,7 +905,7 @@ function getMessageByCoordinate (fields,callback) {
 
 	// check corner
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -925,7 +929,7 @@ function getDifferentMessageByCoordinate (fields,callback) {
 
 	// check corner
 	if(utils.isDataExistNull(fields) || utils.isDataExistNull(kind)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -964,7 +968,7 @@ function getHelpByLocation (fields,callback) {
 
 	// check corner
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1000,7 +1004,7 @@ function getHelpByLocation (fields,callback) {
 
 	// check the code
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 	
@@ -1034,7 +1038,7 @@ function getInfoByUserId (userId,callback) {
 
 	// body...
 	if(utils.isDataExistNull(userId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1063,7 +1067,7 @@ function deleteSession (sessionId,callback) {
 
 	//check sessionId
 	if(utils.isDataExistNull(sessionId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1096,7 +1100,7 @@ function followUser (fields,callback) {
 	};
 	
 	if(utils.isDataExistNull(fields)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1134,7 +1138,7 @@ function getIdByPhone (cellPhone,callback) {
 	};
 
 	if(utils.isDataExistNull(cellPhone)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return
 	}
 
@@ -1157,7 +1161,7 @@ function getMessageByMessageId (messageId,callback){
 	};
 
 	if(utils.isDataExistNull(messageId)){
-		callback(false,1048,[]);
+		callback(false,ERROR.NULL_VALUE,[]);
 		return;
 	}
 
@@ -1207,7 +1211,7 @@ function getUMStateByMessageId(userId,message,callback){
 	};
 
 	if(utils.isDataExistNull(message) || utils.isDataExistNull(userId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1265,7 +1269,7 @@ function getAcceptGroupByMessageId (messageId,callback){
 	};
 
 	if(utils.isDataExistNull(messageId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1289,7 +1293,7 @@ function getWaitGroupByMessageId (messageId,callback){
 	};
 
 	if(utils.isDataExistNull(messageId)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
@@ -1332,7 +1336,7 @@ function ZtoS (zkey,skey,callback) {
 	};
 
 	if(utils.isDataExistNull(zkey) || utils.isDataExistNull(skey)){
-		callback(false,1048);
+		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 	console.log("zkey="+zkey);

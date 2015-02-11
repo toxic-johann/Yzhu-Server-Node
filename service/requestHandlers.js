@@ -13,7 +13,11 @@ util = require("util"),
 //mongoose = require("mongoose"),
 //i give up the mongodb
 databaseHandlers = require("./databaseHandlers.js"),
-pushHandlers = require("./pushHandlers");
+pushHandlers = require("./pushHandlers"),
+ERROR = {
+	DUPLICATE_VALUE:1062,
+	NULL_VALUE:1048
+};
 
 function login (request,response,pathname,register) {
 	// body...
@@ -197,11 +201,11 @@ function loginPost (request,response,pathname) {
 		databaseHandlers.loginUser(fields,function (state,error_code,result) {
 			if(state){
 				console.log('success');
-				response.writeHead(200,{"content-typen":"text/plain"});
+				response.writeHead(200,{"content-type":"text/plain"});
 				response.end("0");
 			}
 			else{
-				response.writeHead(200,{"content-typen":"text/plain"});
+				response.writeHead(200,{"content-type":"text/plain"});
 				response.end(error_code.toString());
 			}
 		});
@@ -214,11 +218,11 @@ function logoutPost (request,response,pathname){
 	databaseHandlers.logoutUser(request.session,function (state,error_code,result) {
 		if(state){
 			console.log('success');
-			response.writeHead(200,{"content-typen":"text/plain"});
+			response.writeHead(200,{"content-type":"text/plain"});
 			response.end("0");
 		}
 		else{
-			response.writeHead(200,{"content-typen":"text/plain"});
+			response.writeHead(200,{"content-type":"text/plain"});
 			response.end(error_code.toString());
 		}
 	});
@@ -233,20 +237,20 @@ function registerPost (request,response,pathname) {
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
-		databaseHandlers.registerUser(fields,function (state,error_code) {
+		databaseHandlers.registerUser(fields,function (state,error_code,reply) {
 			if(state){
 				login(request,response,pathname,'You have successfully registed.Try login.');
 			} else {
-				if(error_code === 1062){	
+				if(error_code === ERROR.DUPLICATE_VALUE){	
 					//dup phone
 					console.log('the cell phone has been registed');
-				} else if(error_code === 1048){
+				} else if(error_code === ERROR.NULL_VALUE){
 					//null value
 					console.log('there can not have null value');
 				}
 			}
 			response.writeHead(200, {'content-type': 'application/json'});
-      		response.end(JSON.stringify({state:state, err: error_code}));
+      		response.end(JSON.stringify({state:state, err: error_code, cellPhone:reply}));
 		});
 	});
 	return ("Post handler 'register' was called");

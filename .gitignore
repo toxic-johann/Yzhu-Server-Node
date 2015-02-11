@@ -52,3 +52,6 @@ conf/localConf.js
 #upload and tmp file
 upload/
 tmp/
+
+#doc
+./doc.txt

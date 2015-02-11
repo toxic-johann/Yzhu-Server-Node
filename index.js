@@ -1,7 +1,7 @@
 var server  = require("./service/server")  ;  
 var router = require("./service/route");  
 var requestHandlers = require("./service/requestHandlers");
-var apiHandlers = require("./api/apiHandlers");
+var apiHandlers = require("./service/apiHandlers");
   
 //创建handle映射类，就是将请求路径和具体的action函数进行映射关联
   
@@ -27,10 +27,10 @@ var handle = {
 	"api":{
 		"forPost":{
 			"auth":{
-				"login":requestHandlers.loginPost,
-				"register":requestHandlers.registerPost,
-				"logout":requestHandlers.logoutPost,
-				"checkphone":requestHandlers.checkPhonePost
+				"login":apiHandlers.loginPost,
+				"register":apiHandlers.registerPost,
+				"logout":apiHandlers.logoutPost,
+				"checkphone":apiHandlers.checkPhonePost
 			},
 			"discover":{
 				"setposition":requestHandlers.setPositionPost,
