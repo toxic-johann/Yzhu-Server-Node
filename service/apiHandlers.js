@@ -91,6 +91,8 @@ function registerPost (request,response,pathname) {
 					console.log('there can not have null value');
 				}
 			}
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
 		});
 	});
 	return ("Post handler 'register' was called");
