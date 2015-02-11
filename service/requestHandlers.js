@@ -625,11 +625,13 @@ function setUserInfoPost (request,response,pathname){
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
 		fields = checkAPI(pathname,fields);
-		fields.userId = databaseHandlers.getIdByPhone(fields.cellPhone);
-		console.log(fields);
-		databaseHandlers.setUserInfo(fields,function (state,err,reply){
-			response.writeHead(200,{"Content-Type":"application/json"});
-			response.end(JSON.stringify({state:state}));
+		databaseHandlers.getIdByPhone(fields.cellPhone,function (state,err,reply){
+			fields.userId = reply;
+			console.log(fields);
+			databaseHandlers.setUserInfo(fields,function (state,err,reply){
+				response.writeHead(200,{"Content-Type":"application/json"});
+				response.end(JSON.stringify({state:state}));
+			});
 		});
 	});
 	return ("Post handler 'to follow' was called");
