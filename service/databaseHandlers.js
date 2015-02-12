@@ -1016,7 +1016,15 @@ function getInfoByUserId (userId,callback) {
 		return;
 	}
 
-	pool.getConnection(function (err,connection) {
+	redisClient.HGETALL("Info:user:"+uid,function (err,reply){
+		if(!err){
+			callback(true,err,reply);
+		} else {
+			callback(false,err,reply);
+		}
+	});
+
+	/*pool.getConnection(function (err,connection) {
 		// select user_id
 		connection.query("SELECT * FROM info WHERE userId = "+connection.escape(userId),function (err1,rows) {
 			// body...
@@ -1029,7 +1037,7 @@ function getInfoByUserId (userId,callback) {
 		});
 
 		connection.release();
-	});
+	});*/
 }
 
 //income

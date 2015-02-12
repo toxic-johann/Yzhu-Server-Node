@@ -15,3 +15,15 @@ in:
 cellPhone
 out:
 registed
+
+/api/user/setUserInfo
+in:
+sex,age
+out:
+state
+
+/api/user/getUserInfo
+in:
+uid(self-->self)
+out:
+info

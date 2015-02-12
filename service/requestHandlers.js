@@ -13,6 +13,7 @@ util = require("util"),
 //mongoose = require("mongoose"),
 //i give up the mongodb
 databaseHandlers = require("./databaseHandlers.js"),
+sessionHandlers = require("./sessionHandlers.js")
 pushHandlers = require("./pushHandlers"),
 ERROR = {
 	DUPLICATE_VALUE:1062,
@@ -234,14 +235,12 @@ function registerPost (request,response,pathname) {
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		databaseHandlers.registerUser(fields,function (state,error_code,reply) {
-			if(pathname[1] === 'api'){
-				response.writeHead(200,{"content-type":"application/json"});
-				response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
-			}
 			if(state){
-				response.writeHead(302, {'Location': '/login'});
-				response.end();
-				//login(request,response,pathname,'You have successfully registed.Try login.');
+				//response.writeHead(302, {'Location': '/login'});
+				//response.end();
+				if(pathname[1] !== 'api'){
+					login(request,response,pathname,'You have successfully registed.Try login.');
+				}
 			} else {
 				if(error_code === ERROR.DUPLICATE_VALUE){	
 					//dup phone
@@ -251,6 +250,8 @@ function registerPost (request,response,pathname) {
 					console.log('there can not have null value');
 				}
 			}
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
 		});
 	});
 	return ("Post handler 'register' was called");
@@ -623,6 +624,10 @@ function waitGroupPost (request,response,pathname){
 }
 
 //income
+//info(s)
+//-----------------------------------------------------------
+//outcome
+//state
 function setUserInfoPost (request,response,pathname){
 	var form = new formidable.IncomingForm();
 
@@ -639,6 +644,42 @@ function setUserInfoPost (request,response,pathname){
 		});
 	});
 	return ("Post handler 'set user info' was called");
+}
+
+//income
+//uid(self for self)
+function getUserInfoPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		if(!fields.userId){
+			response.writeHead(200,{"Content-Type":"application/json"});
+			response.end(JSON.stringify({state:false,err:ERROR.NULL_VALUE}));
+		}
+		if(fields.userId.toLowerCase() === 'self'){
+			fields.sessionId = sessionHandlers.sessionHandler.getSession(request,response);
+			getIdBySession(fields.sessionId,function(state,err,reply){
+				if(!err){
+					fields.userId = reply;
+					get(fields);
+				} else {
+					callback(false,err);
+				}
+			});
+		} else {
+			get(fields);
+		}
+
+		var get = function(fields){
+			databaseHandlers.getInfoByUserId(fields.userId,function (state,err,reply){
+				response.writeHead(200,{"Content-Type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err,info:reply}));
+			});
+		}
+	});
+	return ("Post handler 'get user info' was called"); 
 }
 
 //income
@@ -866,6 +907,7 @@ exports.helpInfoPost = helpInfoPost;
 exports.acceptGroupPost = acceptGroupPost;
 exports.waitGroupPost = waitGroupPost;
 exports.setUserInfoPost = setUserInfoPost;
+exports.getUserInfoPost = getUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
 
 
