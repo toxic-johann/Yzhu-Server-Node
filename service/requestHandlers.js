@@ -234,10 +234,14 @@ function registerPost (request,response,pathname) {
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		databaseHandlers.registerUser(fields,function (state,error_code,reply) {
-			response.writeHead(200,{"content-type":"application/json"});
-			response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
+			if(pathname[1] === 'api'){
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:error_code,cellPhone:reply}));
+			}
 			if(state){
-				login(request,response,pathname,'You have successfully registed.Try login.');
+				response.writeHead(302, {'Location': '/login'});
+				response.end();
+				//login(request,response,pathname,'You have successfully registed.Try login.');
 			} else {
 				if(error_code === ERROR.DUPLICATE_VALUE){	
 					//dup phone

@@ -37,7 +37,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 		//return a new session
 		var cookie = request.headers.cookie;
 		console.log(cookie);
-		if(cookie && cookie.indexOf(cookieName) != -1){
+		if(cookie && cookie.indexOf(cookieName) !== -1){
 			//cookie found
 			var start = cookie.indexOf(cookieName) + cookieName.length + 1;
 			var end = cookie.indexOf(';',start);
@@ -50,7 +50,6 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 				return sessions[value];
 			}
 		}
-		console.log('no,not done');
 
 		//if cookie not found || sessions[value] not found
 		var session = new Session();
