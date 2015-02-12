@@ -70,7 +70,16 @@ var handle = {
 			"help":requestHandlers.theHelp
 		},
 		"relation":{
-			"tofollow":requestHandlers.toFollow
+			"addfriend":requestHandlers.addFriendPost,
+			"confirmfriend":requestHandlers.confirmFriendPost,
+			"removefriend":requestHandlers.deleteFriendPost,
+			"friendlist":requestHandlers.friendListPost,
+			"isfriend":requestHandlers.isFriendPost,
+			"addcontact":requestHandlers.addContactPost,
+			"confirmcontact":requestHandlers.confrimContactPost,
+			"removecontact":requestHandlers.removeContactPost,
+			"iscontact":requestHandlers.isContactPost,
+			"solicitlist":requestHandlers.solicitListPost
 		}
 	}
 };

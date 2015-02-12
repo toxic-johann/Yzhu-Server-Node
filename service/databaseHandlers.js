@@ -1110,35 +1110,6 @@ function deleteSession (sessionId,callback) {
 	});*/
 }
 
-//income
-//userId,toFollowPhone
-function followUser (fields,callback) {
-	callback = callback || function () {
-		// nothing
-	};
-	
-	if(utils.isDataExistNull(fields)){
-		callback(false,ERROR.NULL_VALUE);
-		return;
-	}
-
-    getIdByPhone(fields.userId,function (state,err,reply) {
-		// body...
-		//use for test so do nor tab
-		fields.userId = reply;
-	getIdByPhone(fields.follow,function (state,err,reply) {
-		// body...
-		if(state){
-			fields.follow = reply;
-			//set people concerned
-			redisClient.SADD("Relation:concerned:"+fields.userId,fields.follow);
-			//set follower
-			redisClient.SADD("Relation:follow:"+fields.follow,fields.userId);
-			callback(true);
-		}
-	});
-	});
-}
 
 //--------------------------------------------------
 //these handlers is utils of database handler
@@ -1359,6 +1330,34 @@ function getWaitGroupByMessageId (messageId,callback){
 	});
 }
 
+//input
+//userId,friendId
+//---------------------------------------------------------------
+//output
+//state
+function addFreind(fields,callback){
+	callback = callback || function(){};
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	redisClient.ZADD("Friend:"+fields.userId+":wait",new Date().getTime(),fields.friendId,function(err,reply){
+		if(!err){
+			redisClient.ZADD("Friend:"+fields.friendId+":solicit",new Date().getTime(),fields.userId,function(err,reply){
+				if(!err){
+					callback(true,err,reply);
+				} else {
+					callback(false,err,reply);
+				}
+			});
+		} else {
+			callback(false,err,reply);
+		}
+	});
+}
+
 //--------------------------------------------------
 //to clean the message position record an hour
 //--------------------------------------------------
@@ -1437,7 +1436,7 @@ exports.acceptHelp = acceptHelp;
 exports.ignoreHelp = ignoreHelp;
 exports.askQuestion = askQuestion;
 
-exports.followUser = followUser;
+exports.addFreind = addFreind;
 
 exports.getInfoByUserId = getInfoByUserId;
 exports.setUserInfo = setUserInfo;

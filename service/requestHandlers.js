@@ -310,14 +310,6 @@ function sendHelp (request,response,pathname) {
 	return ("API handler 'send help' was called");
 }
 
-//to follow sb
-function toFollow (request,response,pathname){
-	response.writeHead(200,{"Content-Type":"text/html"});
-	response.write(swig.renderFile('./templates/to_follow.html'));
-	response.end();
-	return ("API handler 'to follow' was called");
-}
-
 //to show the receive message page
 function myReceive (request,response,pathname){
 	response.writeHead(200,{"Content-Type":"text/html"});
@@ -660,7 +652,7 @@ function getUserInfoPost(request,response,pathname){
 		}
 		if(fields.userId.toLowerCase() === 'self'){
 			fields.sessionId = sessionHandlers.sessionHandler.getSession(request,response);
-			getIdBySession(fields.sessionId,function(state,err,reply){
+			databaseHandlers.getIdBySession(fields.sessionId,function(state,err,reply){
 				if(!err){
 					fields.userId = reply;
 					get(fields);
@@ -682,25 +674,6 @@ function getUserInfoPost(request,response,pathname){
 	return ("Post handler 'get user info' was called"); 
 }
 
-//income
-//userId,toFollowPhone
-function toFollowPost (request,response,pathname) {
-	// body...
-	var form = new formidable.IncomingForm();
-
-	form.parse(request,function (err,fields,files) {
-		// reflect to front
-		console.log(fields);
-		databaseHandlers.followUser(fields,function (state,err) {
-			if(state){
-				response.writeHead(200, {'content-type': 'text/plain'});
-				response.end("ok");
-			}
-		})
-		
-	});
-	return ("Post handler 'to follow' was called");
-}
 
 //income
 //userId
@@ -725,6 +698,36 @@ function myReceivePost (request,response,pathname) {
 		
 	});
 	return ("Post handler 'to follow' was called");
+}
+
+//income
+//friend(userId)
+//--------------------------------------------
+//outcome
+//state
+function addFriendPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(fields);
+		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+			if(state){
+				fields.userId = reply;
+				console.log(fields);
+				databaseHandlers.addFriend(fields,function(state,err,reply){
+					response.writeHead(200,{"content-type":"application/json"});
+					response.end(JSON.stringify({state:state,err:err,reply:reply}));
+				});
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
+			}
+		});
+
+		
+	});
+	return ("Post handler 'add friend' was called");
 }
 
 /*
@@ -889,7 +892,6 @@ exports.setPosition = setPosition;
 exports.findUserInArea = findUserInArea;
 exports.findMessageInArea = findMessageInArea;
 exports.sendHelp = sendHelp;
-exports.toFollow = toFollow;
 exports.myReceive = myReceive;
 exports.theHelp = theHelp;
 
@@ -901,7 +903,6 @@ exports.offerHelpPost = offerHelpPost;
 exports.refuseToHelpPost = refuseToHelpPost;
 exports.ignoreHelpPost = ignoreHelpPost;
 exports.acceptHelpPost =acceptHelpPost;
-exports.toFollowPost = toFollowPost;
 exports.myReceivePost = myReceivePost;
 exports.helpInfoPost = helpInfoPost;
 exports.acceptGroupPost = acceptGroupPost;
@@ -909,6 +910,8 @@ exports.waitGroupPost = waitGroupPost;
 exports.setUserInfoPost = setUserInfoPost;
 exports.getUserInfoPost = getUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
+
+exports.addFriendPost = addFriendPost;
 
 
 exports.dbTest = dbTest;
