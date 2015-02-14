@@ -710,7 +710,7 @@ function addFriendByUserIdPost(request,response,pathname){
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
-		fields = checkAPI(fields);
+		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 			if(state){
@@ -749,9 +749,7 @@ function addFriendByPhonePost(request,response,pathname){
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
-		console.log(fields);
-		fields = checkAPI(fields);
-		console.log(fields);
+		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 			if(state){
@@ -782,7 +780,7 @@ function confirmFriendPost(request,response,pathname){
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
-		fields = checkAPI(fields);
+		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 			if(state){
@@ -987,6 +985,15 @@ function checkAPI(pathname,fields){
 	} else {
 		return fields;
 	}
+}
+
+function return404 (request,response,pathname) {
+	// body...
+	console.log("404 not found");
+	response.writeHead(404,{"Content-Type":"text/plain"});
+	response.write("404 not found");
+	response.end();
+	return "404 not found";
 }
 /*
 -------------------------------------------
