@@ -749,6 +749,7 @@ function addFriendByPhonePost(request,response,pathname){
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
+		console.log(fields);
 		fields = checkAPI(fields);
 		console.log(fields);
 		fields.kind = "Friend";
