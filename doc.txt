@@ -27,3 +27,9 @@ in:
 uid(self-->self)
 out:
 info
+
+/api/relation/addFriend
+in:
+freindId(userId)
+out:
+state

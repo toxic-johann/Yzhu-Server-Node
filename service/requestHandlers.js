@@ -718,6 +718,11 @@ function addFriendPost(request,response,pathname){
 				databaseHandlers.addFriend(fields,function(state,err,reply){
 					response.writeHead(200,{"content-type":"application/json"});
 					response.end(JSON.stringify({state:state,err:err,reply:reply}));
+					pushHandlers.pushNotification({
+						"alert":"some body add you",
+						"alias":fields.friendId,
+						"extras":{"time":new Date().getTime(),"userId":fields.userId}
+					});
 				});
 			} else {
 				response.writeHead(200,{"content-type":"application/json"});
@@ -728,6 +733,26 @@ function addFriendPost(request,response,pathname){
 		
 	});
 	return ("Post handler 'add friend' was called");
+}
+
+//outcome
+//solicit List
+function solicitListPost(request,response,pathname){
+	var fields;
+	databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+		if(state){
+			fields.userId = reply;
+			console.log(fields);
+			databaseHandlers.getSolicitListByUserId(userId,function(state,err,reply){
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err,reply:reply}));
+			});
+		} else {
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err}));
+		}
+	});
+	return ("Post handler 'solicit list' was called");
 }
 
 /*
@@ -912,6 +937,7 @@ exports.getUserInfoPost = getUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
 
 exports.addFriendPost = addFriendPost;
+exports.solicitListPost = solicitListPost;
 
 
 exports.dbTest = dbTest;

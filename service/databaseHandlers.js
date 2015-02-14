@@ -1358,6 +1358,17 @@ function addFreind(fields,callback){
 	});
 }
 
+function getSolicitListByUserId(userId,callback){
+	callback = callback || function(){};
+
+	if(utils.isDataExistNull(userId)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	
+}
+
 //--------------------------------------------------
 //to clean the message position record an hour
 //--------------------------------------------------
@@ -1437,6 +1448,7 @@ exports.ignoreHelp = ignoreHelp;
 exports.askQuestion = askQuestion;
 
 exports.addFreind = addFreind;
+exports.getSolicitListByUserId = getSolicitListByUserId;
 
 exports.getInfoByUserId = getInfoByUserId;
 exports.setUserInfo = setUserInfo;
