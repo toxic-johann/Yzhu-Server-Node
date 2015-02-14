@@ -754,7 +754,7 @@ function addFriendByPhonePost(request,response,pathname){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
-				databaseHandlers.getIdByPhone(fields.cellPhone,function(state,err,reply){
+				databaseHandlers.getIdByPhone(fields.friendId,function(state,err,reply){
 					if(state){
 						fields.friendId = reply;
 						addFriendByUserIdPost.add(response,fields);
