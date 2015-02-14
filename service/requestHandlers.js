@@ -13,7 +13,8 @@ util = require("util"),
 //mongoose = require("mongoose"),
 //i give up the mongodb
 databaseHandlers = require("./databaseHandlers.js"),
-sessionHandlers = require("./sessionHandlers.js")
+sessionHandlers = require("./sessionHandlers.js").sessionHandler,
+sessionHandler = new sessionHandlers(),
 pushHandlers = require("./pushHandlers"),
 ERROR = {
 	DUPLICATE_VALUE:1062,
@@ -651,7 +652,7 @@ function getUserInfoPost(request,response,pathname){
 			response.end(JSON.stringify({state:false,err:ERROR.NULL_VALUE}));
 		}
 		if(fields.userId.toLowerCase() === 'self'){
-			fields.sessionId = sessionHandlers.sessionHandler.getSession(request,response);
+			fields.sessionId = sessionHandler.getSession(request,response);
 			databaseHandlers.getIdBySession(fields.sessionId,function(state,err,reply){
 				if(!err){
 					fields.userId = reply;
@@ -712,7 +713,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -751,7 +752,7 @@ function addFriendByPhonePost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -782,7 +783,7 @@ function confirmFriendPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -813,7 +814,7 @@ function confirmFriendPost(request,response,pathname){
 //friend List
 function friendListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+	databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			console.log(fields);
@@ -833,7 +834,7 @@ function friendListPost(request,response,pathname){
 //solicit List
 function solicitListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+	databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			fields.kind = "Friend";
