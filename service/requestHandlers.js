@@ -711,7 +711,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(request.session.slice(8),function(state,err,reply){
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -723,7 +723,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		});		
 	});
 
-	var add = function(response,fields){
+	function add (response,fields){
 		databaseHandlers.addFriend(fields,function(state,err,reply){
 			response.writeHead(200,{"content-type":"application/json"});
 			response.end(JSON.stringify({state:state,err:err,reply:reply}));
