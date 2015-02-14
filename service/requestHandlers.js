@@ -18,7 +18,7 @@ ERROR = {
 	DUPLICATE_VALUE:1062,
 	NULL_VALUE:1048
 },
-friend = function(){
+friend = new function(){
 	this.add=function(response,fields){
 		databaseHandlers.addFriend(fields,function(state,err,reply){
 			response.writeHead(200,{"content-type":"application/json"});
