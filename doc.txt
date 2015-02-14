@@ -33,3 +33,9 @@ in:
 freindId(userId)
 out:
 state
+
+/api/relation/addFriendByPhone
+in:
+freindId(phone)
+out:
+state

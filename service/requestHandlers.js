@@ -716,21 +716,26 @@ function addFriendByUserIdPost(request,response,pathname){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
-				databaseHandlers.addFriend(fields,function(state,err,reply){
-					response.writeHead(200,{"content-type":"application/json"});
-					response.end(JSON.stringify({state:state,err:err,reply:reply}));
-					pushHandlers.pushNotification({
-						"alert":"some body add you",
-						"alias":fields.friendId,
-						"extras":{"time":new Date().getTime(),"userId":fields.userId}
-					});
-				});
+				add(response,fields);
 			} else {
 				response.writeHead(200,{"content-type":"application/json"});
 				response.end(JSON.stringify({state:state,err:err}));
 			}
 		});		
 	});
+
+	var add = function(response,fields){
+		databaseHandlers.addFriend(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,reply:reply}));
+			pushHandlers.pushNotification({
+				"alert":"some body add you",
+				"alias":fields.friendId,
+				"extras":{"time":new Date().getTime(),"userId":fields.userId}
+			});
+		});
+	}
+
 	return ("Post handler 'add friend' was called");
 }
 
@@ -750,14 +755,14 @@ function addFriendByPhonePost(request,response,pathname){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
-				databaseHandlers.addFriend(fields,function(state,err,reply){
-					response.writeHead(200,{"content-type":"application/json"});
-					response.end(JSON.stringify({state:state,err:err,reply:reply}));
-					pushHandlers.pushNotification({
-						"alert":"some body add you",
-						"alias":fields.friendId,
-						"extras":{"time":new Date().getTime(),"userId":fields.userId}
-					});
+				databaseHandlers.getIdByPhone(fields.cellPhone,function(state,err,reply){
+					if(state){
+						fields.friendId = reply;
+						addFriendByUserIdPost.add(response,fields);
+					} else {
+						response.writeHead(200,{"content-type":"application/json"});
+						response.end(JSON.stringify({state:state,err:err}));
+					}
 				});
 			} else {
 				response.writeHead(200,{"content-type":"application/json"});
@@ -778,7 +783,7 @@ function solicitListPost(request,response,pathname){
 			console.log(fields);
 			databaseHandlers.getSolicitListByUserId(userId,function(state,err,reply){
 				response.writeHead(200,{"content-type":"application/json"});
-				response.end(JSON.stringify({state:state,err:err,reply:reply}));
+				response.end(JSON.stringify({state:state,err:err,list:reply}));
 			});
 		} else {
 			response.writeHead(200,{"content-type":"application/json"});
@@ -970,7 +975,7 @@ exports.getUserInfoPost = getUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
 
 exports.addFriendByUserIdPost = addFriendByUserIdPost;
-exports.addFriendByPhone = addFriendByPhonePost;
+exports.addFriendByPhonePost = addFriendByPhonePost;
 exports.solicitListPost = solicitListPost;
 
 
