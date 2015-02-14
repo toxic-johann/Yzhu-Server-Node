@@ -13,8 +13,6 @@ util = require("util"),
 //mongoose = require("mongoose"),
 //i give up the mongodb
 databaseHandlers = require("./databaseHandlers.js"),
-sessionHandlers = require("./sessionHandlers.js").sessionHandler,
-sessionHandler = new sessionHandlers(),
 pushHandlers = require("./pushHandlers"),
 ERROR = {
 	DUPLICATE_VALUE:1062,
@@ -652,7 +650,7 @@ function getUserInfoPost(request,response,pathname){
 			response.end(JSON.stringify({state:false,err:ERROR.NULL_VALUE}));
 		}
 		if(fields.userId.toLowerCase() === 'self'){
-			fields.sessionId = sessionHandler.getSession(request,response);
+			fields.sessionId = request.session.slice(8);
 			databaseHandlers.getIdBySession(fields.sessionId,function(state,err,reply){
 				if(!err){
 					fields.userId = reply;
@@ -713,7 +711,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
+		databaseHandlers.getIdBySession(request.session.slice(8),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -752,8 +750,8 @@ function addFriendByPhonePost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		console.log(sessionHandler.getSession(request,response).toString().slice(8));
-		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response).toString().slice(8),function(state,err,reply){
+		console.log(request.session.slice(8));
+		databaseHandlers.getIdBySession(request.session.slice(8),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
