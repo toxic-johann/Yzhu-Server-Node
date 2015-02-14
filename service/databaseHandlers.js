@@ -1343,6 +1343,11 @@ function addFreind(fields,callback){
 		return;
 	}
 
+	if(fields.userId === fields.friendId){
+		callback(false,ERROR.DUPLICATE_VALUE);
+		return;
+	}
+
 	redisClient.ZADD(fields.kind+":"+fields.userId+":wait",new Date().getTime(),fields.friendId,function(err,reply){
 		if(!err){
 			redisClient.ZADD(fields.kind+":"+fields.friendId+":solicit",new Date().getTime(),fields.userId,function(err,reply){

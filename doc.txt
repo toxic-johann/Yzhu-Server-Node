@@ -36,6 +36,6 @@ state
 
 /api/relation/addFriendByPhone
 in:
-freindId(phone)
+friendId(phone)
 out:
 state
