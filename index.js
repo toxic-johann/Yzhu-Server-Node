@@ -57,7 +57,7 @@ var handle = {
 			},
 			"relation":{
 				"addfriend":requestHandlers.addFriendByUserIdPost,
-				"addfriendbyphone":requestHandlers.addFreindByPhonePost,
+				"addfriendbyphone":requestHandlers.addFriendByPhonePost,
 				"confirmfriend":requestHandlers.confirmFriendPost,
 				"removefriend":requestHandlers.deleteFriendPost,
 				"friendlist":requestHandlers.friendListPost,
