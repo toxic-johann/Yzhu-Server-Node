@@ -699,6 +699,20 @@ function myReceivePost (request,response,pathname) {
 	return ("Post handler 'to follow' was called");
 }
 
+var Friend = {
+	this.add=function(response,fields){
+		databaseHandlers.addFriend(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,reply:reply}));
+			pushHandlers.pushNotification({
+				"alert":"some body add you",
+				"alias":fields.friendId,
+				"extras":{"time":new Date().getTime(),"userId":fields.userId}
+			});
+		});
+	}
+}
+
 //income
 //friend(userId)
 //--------------------------------------------
@@ -715,7 +729,7 @@ function addFriendByUserIdPost(request,response,pathname){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
-				add(response,fields);
+				new Friend().add(response,fields);
 			} else {
 				response.writeHead(200,{"content-type":"application/json"});
 				response.end(JSON.stringify({state:state,err:err}));
@@ -723,16 +737,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		});		
 	});
 
-	this.add=function(response,fields){
-		databaseHandlers.addFriend(fields,function(state,err,reply){
-			response.writeHead(200,{"content-type":"application/json"});
-			response.end(JSON.stringify({state:state,err:err,reply:reply}));
-			pushHandlers.pushNotification({
-				"alert":"some body add you",
-				"alias":fields.friendId,
-				"extras":{"time":new Date().getTime(),"userId":fields.userId}
-			});
-		});
+	
 	}
 
 	return ("Post handler 'add friend' was called");
