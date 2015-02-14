@@ -751,7 +751,7 @@ function addFriendByPhonePost(request,response,pathname){
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
 		console.log(request.session.slice(8));
-		databaseHandlers.getIdBySession(request.session.slice(8),function(state,err,reply){
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
