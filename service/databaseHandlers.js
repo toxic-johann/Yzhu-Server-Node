@@ -1335,7 +1335,7 @@ function getWaitGroupByMessageId (messageId,callback){
 //---------------------------------------------------------------
 //output
 //state
-function addFreind(fields,callback){
+function addFriend(fields,callback){
 	callback = callback || function(){};
 
 	if(utils.isDataExistNull(fields)){
@@ -1498,7 +1498,7 @@ exports.acceptHelp = acceptHelp;
 exports.ignoreHelp = ignoreHelp;
 exports.askQuestion = askQuestion;
 
-exports.addFreind = addFreind;
+exports.addFriend = addFriend;
 exports.confirmFriend = confirmFriend;
 exports.getSolicitList = getSolicitList;
 
