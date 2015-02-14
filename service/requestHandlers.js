@@ -713,7 +713,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -752,7 +752,7 @@ function addFriendByPhonePost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -783,7 +783,7 @@ function confirmFriendPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
+		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -814,7 +814,7 @@ function confirmFriendPost(request,response,pathname){
 //friend List
 function friendListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
+	databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			console.log(fields);
@@ -834,7 +834,7 @@ function friendListPost(request,response,pathname){
 //solicit List
 function solicitListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandler.getSession(),function(state,err,reply){
+	databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			fields.kind = "Friend";
