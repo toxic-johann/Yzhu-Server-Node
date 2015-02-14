@@ -1343,9 +1343,9 @@ function addFreind(fields,callback){
 		return;
 	}
 
-	redisClient.ZADD("Friend:"+fields.userId+":wait",new Date().getTime(),fields.friendId,function(err,reply){
+	redisClient.ZADD(fields.kind+":"+fields.userId+":wait",new Date().getTime(),fields.friendId,function(err,reply){
 		if(!err){
-			redisClient.ZADD("Friend:"+fields.friendId+":solicit",new Date().getTime(),fields.userId,function(err,reply){
+			redisClient.ZADD(fields.kind+":"+fields.friendId+":solicit",new Date().getTime(),fields.userId,function(err,reply){
 				if(!err){
 					callback(true,err,reply);
 				} else {

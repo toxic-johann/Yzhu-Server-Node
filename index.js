@@ -70,12 +70,14 @@ var handle = {
 			"help":requestHandlers.theHelp
 		},
 		"relation":{
-			"addfriend":requestHandlers.addFriendPost,
+			"addfriend":requestHandlers.addFriendByUserIdPost,
+			"addfriendbyphone":requestHandlers.addFreindByPhonePost,
 			"confirmfriend":requestHandlers.confirmFriendPost,
 			"removefriend":requestHandlers.deleteFriendPost,
 			"friendlist":requestHandlers.friendListPost,
 			"isfriend":requestHandlers.isFriendPost,
-			"addcontact":requestHandlers.addContactPost,
+			"addcontact":requestHandlers.addContactByUserIdPost,
+			"addContactByPhone":requestHandlers.addContactByPhone,
 			"confirmcontact":requestHandlers.confrimContactPost,
 			"removecontact":requestHandlers.removeContactPost,
 			"iscontact":requestHandlers.isContactPost,

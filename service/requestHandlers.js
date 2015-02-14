@@ -705,12 +705,13 @@ function myReceivePost (request,response,pathname) {
 //--------------------------------------------
 //outcome
 //state
-function addFriendPost(request,response,pathname){
+function addFriendByUserIdPost(request,response,pathname){
 	var form = new formidable.IncomingForm();
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
 		fields = checkAPI(fields);
+		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 			if(state){
 				fields.userId = reply;
@@ -728,9 +729,41 @@ function addFriendPost(request,response,pathname){
 				response.writeHead(200,{"content-type":"application/json"});
 				response.end(JSON.stringify({state:state,err:err}));
 			}
-		});
+		});		
+	});
+	return ("Post handler 'add friend' was called");
+}
 
-		
+//income
+//friend(userId)
+//--------------------------------------------
+//outcome
+//state
+function addFriendByPhonePost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(fields);
+		fields.kind = "Friend";
+		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+			if(state){
+				fields.userId = reply;
+				console.log(fields);
+				databaseHandlers.addFriend(fields,function(state,err,reply){
+					response.writeHead(200,{"content-type":"application/json"});
+					response.end(JSON.stringify({state:state,err:err,reply:reply}));
+					pushHandlers.pushNotification({
+						"alert":"some body add you",
+						"alias":fields.friendId,
+						"extras":{"time":new Date().getTime(),"userId":fields.userId}
+					});
+				});
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
+			}
+		});	
 	});
 	return ("Post handler 'add friend' was called");
 }
@@ -936,7 +969,8 @@ exports.setUserInfoPost = setUserInfoPost;
 exports.getUserInfoPost = getUserInfoPost;
 exports.askQuestionPost = askQuestionPost;
 
-exports.addFriendPost = addFriendPost;
+exports.addFriendByUserIdPost = addFriendByUserIdPost;
+exports.addFriendByPhone = addFriendByPhonePost;
 exports.solicitListPost = solicitListPost;
 
 
