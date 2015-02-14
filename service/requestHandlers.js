@@ -750,6 +750,7 @@ function addFriendByPhonePost(request,response,pathname){
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
 		fields = checkAPI(fields);
+		console.log(fields);
 		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 			if(state){
@@ -770,7 +771,63 @@ function addFriendByPhonePost(request,response,pathname){
 			}
 		});	
 	});
+	return ("Post handler 'add friend by phone' was called");
+}
+
+//income
+//friendId,userId(session)
+function confirmFriendPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(fields);
+		fields.kind = "Friend";
+		databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+			if(state){
+				fields.userId = reply;
+				console.log(fields);
+				add(response,fields);
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
+			}
+		});		
+	});
+
+	var confirm = function(response,fields){
+		databaseHandlers.confirmFriend(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,reply:reply}));
+			pushHandlers.pushNotification({
+				"alert":"some body pass you",
+				"alias":fields.friendId,
+				"extras":{"time":new Date().getTime(),"userId":fields.userId}
+			});
+		});
+	}
+
 	return ("Post handler 'add friend' was called");
+}
+
+//outcome
+//friend List
+function friendListPost(request,response,pathname){
+	var fields;
+	databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
+		if(state){
+			fields.userId = reply;
+			console.log(fields);
+			databaseHandlers.getFriendList(fields,function(state,err,reply){
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err,list:reply}));
+			});
+		} else {
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err}));
+		}
+	});
+	return ("Post handler 'friend list' was called");
 }
 
 //outcome
@@ -780,8 +837,9 @@ function solicitListPost(request,response,pathname){
 	databaseHandlers.getIdBySession(sessionHandlers.sessionHandler.getSession(),function(state,err,reply){
 		if(state){
 			fields.userId = reply;
+			fields.kind = "Friend";
 			console.log(fields);
-			databaseHandlers.getSolicitListByUserId(userId,function(state,err,reply){
+			databaseHandlers.getSolicitList(fields,function(state,err,reply){
 				response.writeHead(200,{"content-type":"application/json"});
 				response.end(JSON.stringify({state:state,err:err,list:reply}));
 			});
@@ -976,6 +1034,7 @@ exports.askQuestionPost = askQuestionPost;
 
 exports.addFriendByUserIdPost = addFriendByUserIdPost;
 exports.addFriendByPhonePost = addFriendByPhonePost;
+exports.confirmFriendPost = confirmFriendPost;
 exports.solicitListPost = solicitListPost;
 
 

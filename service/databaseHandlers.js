@@ -1363,7 +1363,47 @@ function addFreind(fields,callback){
 	});
 }
 
-function getSolicitListByUserId(userId,callback){
+function confirmFriend(fields,callback){
+	callback = callback || function(){};
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	if(fields.userId === fields.friendId){
+		callback(false,ERROR.DUPLICATE_VALUE);
+		return;
+	}
+
+	redisClient.ZREM(fields.kind+":"+fields.userId+":solicit",fields.friendId,function(err,reply){
+		if(!err && reply>0){
+			redisClient.SADD(fields.kind+":"+fields.userId+":friend",fields.friendId,function(err,reply){
+				if(!err){
+					redisClient.SADD(fields.kind+":"+fields.friendId+":friend",fields.userId,function(err,reply){
+						if(!err){
+							callback(true,err,reply);
+						} else {
+							callback(false,err,reply);
+						}
+					});
+					redisClient.ZREM(fields.kind+":"+fields.friendId+":wait",fields.userId);
+				} else {
+					callback(false,err,reply);
+				}
+			});
+		} else {
+			callback(false,err,reply);
+		}
+	});
+}
+
+//income
+//userId,kind
+//----------------------------------------------------------------
+//outcome
+//list
+function getSolicitList(fields,callback){
 	callback = callback || function(){};
 
 	if(utils.isDataExistNull(userId)){
@@ -1371,7 +1411,13 @@ function getSolicitListByUserId(userId,callback){
 		return;
 	}
 
-	
+	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit",function(err,reply){
+		if(!err){
+			callback(true,err,reply);
+		} else {
+			callback(false,err,reply);
+		}
+	});
 }
 
 //--------------------------------------------------
@@ -1453,7 +1499,8 @@ exports.ignoreHelp = ignoreHelp;
 exports.askQuestion = askQuestion;
 
 exports.addFreind = addFreind;
-exports.getSolicitListByUserId = getSolicitListByUserId;
+exports.confirmFriend = confirmFriend;
+exports.getSolicitList = getSolicitList;
 
 exports.getInfoByUserId = getInfoByUserId;
 exports.setUserInfo = setUserInfo;
