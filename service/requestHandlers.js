@@ -723,7 +723,7 @@ function addFriendByUserIdPost(request,response,pathname){
 		});		
 	});
 
-	function add (response,fields){
+	add:function (response,fields){
 		databaseHandlers.addFriend(fields,function(state,err,reply){
 			response.writeHead(200,{"content-type":"application/json"});
 			response.end(JSON.stringify({state:state,err:err,reply:reply}));
