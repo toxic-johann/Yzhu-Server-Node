@@ -1016,7 +1016,7 @@ function getInfoByUserId (userId,callback) {
 		return;
 	}
 
-	redisClient.HGETALL("Info:user:"+uid,function (err,reply){
+	redisClient.HGETALL("Info:user:"+userId,function (err,reply){
 		if(!err){
 			callback(true,err,reply);
 		} else {
