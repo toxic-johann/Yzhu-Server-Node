@@ -1406,12 +1406,56 @@ function confirmFriend(fields,callback){
 function getSolicitList(fields,callback){
 	callback = callback || function(){};
 
-	if(utils.isDataExistNull(userId)){
+	if(utils.isDataExistNull(fields)){
 		callback(false,ERROR.NULL_VALUE);
 		return;
 	}
 
 	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit",function(err,reply){
+		if(!err){
+			callback(true,err,reply);
+		} else {
+			callback(false,err,reply);
+		}
+	});
+}
+
+//income
+//userId,kind
+//----------------------------------------------------------------
+//outcome
+//list
+function getFriendList(fields,callback){
+	callback = callback || function(){}
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	redisClient.SMEMBERS(fields.kind+":"+fields.userId+":friend",function(err,reply){
+		if(!err){
+			callback(true,err,reply);
+		} else {
+			callback(false,err,reply);
+		}
+	});
+}
+
+//income
+//userId,friendId,relation,level
+//----------------------------------------------------------------
+//outcome
+//1 for true,0 for false
+function checkRelation(fields,callback){
+	callback = callback || function(){}
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	redisClient.SISMEMBER(fields.kind+":"+fields.userId+":"+fields.relation,function(err,reply){
 		if(!err){
 			callback(true,err,reply);
 		} else {
@@ -1501,6 +1545,8 @@ exports.askQuestion = askQuestion;
 exports.addFriend = addFriend;
 exports.confirmFriend = confirmFriend;
 exports.getSolicitList = getSolicitList;
+exports.getFriendList = getFriendList;
+exports.checkRelation = checkRelation;
 
 exports.getInfoByUserId = getInfoByUserId;
 exports.setUserInfo = setUserInfo;

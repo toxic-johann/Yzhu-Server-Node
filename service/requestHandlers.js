@@ -30,6 +30,25 @@ friend = new function(){
 			});
 		});
 	};
+
+	this.confirm = function(response,fields){
+		databaseHandlers.confirmFriend(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,reply:reply}));
+			pushHandlers.pushNotification({
+				"alert":"some body pass you",
+				"alias":fields.friendId,
+				"extras":{"time":new Date().getTime(),"userId":fields.userId}
+			});
+		});
+	}
+
+	this.checkRelation = function(response,fields){
+		databaseHandlers.checkRelation(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,isFriend:reply}));
+		});
+	}
 }();
 
 function login (request,response,pathname,register) {
@@ -781,11 +800,11 @@ function confirmFriendPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
-		databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
-				add(response,fields);
+				friend.confirm(response,fields);
 			} else {
 				response.writeHead(200,{"content-type":"application/json"});
 				response.end(JSON.stringify({state:state,err:err}));
@@ -793,17 +812,7 @@ function confirmFriendPost(request,response,pathname){
 		});		
 	});
 
-	var confirm = function(response,fields){
-		databaseHandlers.confirmFriend(fields,function(state,err,reply){
-			response.writeHead(200,{"content-type":"application/json"});
-			response.end(JSON.stringify({state:state,err:err,reply:reply}));
-			pushHandlers.pushNotification({
-				"alert":"some body pass you",
-				"alias":fields.friendId,
-				"extras":{"time":new Date().getTime(),"userId":fields.userId}
-			});
-		});
-	}
+	
 
 	return ("Post handler 'add friend' was called");
 }
@@ -812,7 +821,7 @@ function confirmFriendPost(request,response,pathname){
 //friend List
 function friendListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
+	databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			console.log(fields);
@@ -832,7 +841,7 @@ function friendListPost(request,response,pathname){
 //solicit List
 function solicitListPost(request,response,pathname){
 	var fields;
-	databaseHandlers.getIdBySession(sessionHandler.getSession(request,response),function(state,err,reply){
+	databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 		if(state){
 			fields.userId = reply;
 			fields.kind = "Friend";
@@ -847,6 +856,33 @@ function solicitListPost(request,response,pathname){
 		}
 	});
 	return ("Post handler 'solicit list' was called");
+}
+
+//income
+//friendId
+//------------------------------------------------------------------
+//outcome
+//isFriend
+function isFriendPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		fields.kind = "Friend";
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
+			if(state){
+				fields.userId = reply;
+				fields.kind ="Friend";
+				fields.relation = "friend";
+				console.log(fields);
+				friend.checkRelation(response,fields);
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
+			}
+		});		
+	});
 }
 
 /*
@@ -1043,6 +1079,8 @@ exports.addFriendByUserIdPost = addFriendByUserIdPost;
 exports.addFriendByPhonePost = addFriendByPhonePost;
 exports.confirmFriendPost = confirmFriendPost;
 exports.solicitListPost = solicitListPost;
+exports.friendListPost = friendListPost;
+exports.isFriendPost = isFriendPost;
 
 
 exports.dbTest = dbTest;
