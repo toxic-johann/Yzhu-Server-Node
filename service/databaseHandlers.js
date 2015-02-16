@@ -1439,7 +1439,7 @@ function getSolicitList(fields,callback){
 		return;
 	}
 
-	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit",function(err,reply){
+	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit","-inf","+inf",function(err,reply){
 		if(!err){
 			callback(true,err,reply);
 		} else {
