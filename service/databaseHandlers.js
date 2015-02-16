@@ -1448,7 +1448,7 @@ function getSolicitList(fields,callback){
 				result[(i-1)/2]["userId"] = reply[i-1];
 				getInfoByUserId(reply[i-1],function(state,err,reply){
 					times++;
-					if(times === reply.length/2){
+					if(times === (reply.length-1)/2){
 						callback(true,err,result);
 					}
 				});
