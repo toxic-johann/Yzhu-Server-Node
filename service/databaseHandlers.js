@@ -1441,22 +1441,24 @@ function getSolicitList(fields,callback){
 
 	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit","-inf","+inf","WITHSCORES",function(err,reply){
 		if(!err){
-			var result=[];
+			var result=[],times=0;
 			for(var i=reply.length-1;i>-1;i=i-2){
-				if(i%2 === 1){
-					result[(i-1)/2] = {};
-					result[(i-1)/2]["time"] = reply[i];
-				} else {
-					result[i/2]["userId"] = reply[i];
-				}
+				result[(i-1)/2] = {};
+				result[(i-1)/2]["time"] = reply[i];
+				result[(i-1)/2]["userId"] = reply[i-1];
+				getInfoByUserId(reply[i-1],function(state,err,reply){
+					times++;
+					if(times === reply.length/2){
+						callback(true,err,result);
+					}
+				});
 			}
-			callback(true,err,result);
 		} else {
 			callback(false,err,reply);
 		}
 	});
 }
-
+ 
 //income
 //userId,kind
 //----------------------------------------------------------------
