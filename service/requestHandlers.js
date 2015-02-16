@@ -41,6 +41,13 @@ friend = new function(){
 				"extras":{"time":new Date().getTime(),"userId":fields.userId}
 			});
 		});
+	};
+
+	this.remove = function(response,fields){
+		databaseHandlers.removeFriend(fields,function(state,err,reply){
+			response.writeHead(200,{"content-type":"application/json"});
+			response.end(JSON.stringify({state:state,err:err,reply:reply}));
+		});
 	}
 
 	this.checkRelation = function(response,fields){
@@ -48,7 +55,7 @@ friend = new function(){
 			response.writeHead(200,{"content-type":"application/json"});
 			response.end(JSON.stringify({state:state,err:err,isFriend:reply}));
 		});
-	}
+	};
 }();
 
 function login (request,response,pathname,register) {
@@ -800,6 +807,7 @@ function confirmFriendPost(request,response,pathname){
 		// reflect to front
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
+		fields.relation = "friend";
 		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 			if(state){
 				fields.userId = reply;
@@ -811,11 +819,24 @@ function confirmFriendPost(request,response,pathname){
 			}
 		});		
 	});
-
-	
-
-	return ("Post handler 'add friend' was called");
+	return ("Post handler 'confirm friend' was called");
 }
+
+//income
+//friendId
+function removeFriendPost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		fields.kind = "Friend";
+		fields.relation = "friend";
+		friend.remove(response,fields);
+	});
+	return ("Post handler 'confirm friend' was called");
+}
+
 
 //outcome
 //friend List
@@ -1078,6 +1099,7 @@ exports.askQuestionPost = askQuestionPost;
 exports.addFriendByUserIdPost = addFriendByUserIdPost;
 exports.addFriendByPhonePost = addFriendByPhonePost;
 exports.confirmFriendPost = confirmFriendPost;
+exports.removeFriendPost = removeFriendPost;
 exports.solicitListPost = solicitListPost;
 exports.friendListPost = friendListPost;
 exports.isFriendPost = isFriendPost;

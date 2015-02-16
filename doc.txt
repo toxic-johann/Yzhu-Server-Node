@@ -39,3 +39,7 @@ in:
 friendId(phone)
 out:
 state
+
+/api/relation/solicilist
+out:
+list

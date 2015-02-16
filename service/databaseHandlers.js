@@ -1378,9 +1378,9 @@ function confirmFriend(fields,callback){
 
 	redisClient.ZREM(fields.kind+":"+fields.userId+":solicit",fields.friendId,function(err,reply){
 		if(!err && reply>0){
-			redisClient.SADD(fields.kind+":"+fields.userId+":friend",fields.friendId,function(err,reply){
+			redisClient.SADD(fields.kind+":"+fields.userId+":"+fields.relation,fields.friendId,function(err,reply){
 				if(!err){
-					redisClient.SADD(fields.kind+":"+fields.friendId+":friend",fields.userId,function(err,reply){
+					redisClient.SADD(fields.kind+":"+fields.friendId+":"+fields.relation,fields.userId,function(err,reply){
 						if(!err){
 							callback(true,err,reply);
 						} else {
@@ -1388,6 +1388,34 @@ function confirmFriend(fields,callback){
 						}
 					});
 					redisClient.ZREM(fields.kind+":"+fields.friendId+":wait",fields.userId);
+				} else {
+					callback(false,err,reply);
+				}
+			});
+		} else {
+			callback(false,err,reply);
+		}
+	});
+}
+
+function removeFriend(fields,callback){
+	callback = callback || function(){};
+
+	if(utils.isDataExistNull(fields)){
+		callback(false,ERROR.NULL_VALUE);
+		return;
+	}
+
+	if(fields.userId === fields.friendId){
+		callback(false,ERROR.DUPLICATE_VALUE);
+		return;
+	}
+
+	redisClient.SREM(fields.kind+":"+fields.userId+":"+fields.relation,field.friendId,function(err,reply){
+		if(!err && reply>0){
+			redisClient.SREM(fields.kind+":"+fields.friendId+":"+fields.relation,fields.userId,function(err,reply){
+				if(!err && reply>0){
+					callback(true,err,reply);
 				} else {
 					callback(false,err,reply);
 				}
@@ -1544,6 +1572,7 @@ exports.askQuestion = askQuestion;
 
 exports.addFriend = addFriend;
 exports.confirmFriend = confirmFriend;
+exports.removeFriend = removeFriend; 
 exports.getSolicitList = getSolicitList;
 exports.getFriendList = getFriendList;
 exports.checkRelation = checkRelation;
