@@ -826,7 +826,6 @@ function addContactByPhonePost(request,response,pathname){
 	});
 	return ("Post handler 'add contact by phone' was called");
 }
-}
 
 //income
 //friendId,userId(session)
