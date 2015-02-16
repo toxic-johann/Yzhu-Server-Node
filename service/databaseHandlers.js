@@ -1439,9 +1439,17 @@ function getSolicitList(fields,callback){
 		return;
 	}
 
-	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit","-inf","+inf",function(err,reply){
+	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit","-inf","+inf","WITHSCORES",function(err,reply){
 		if(!err){
-			callback(true,err,reply);
+			var result;
+			for(var i=reply.length-1;i>-1;i=i-2){
+				if(i%2 === 1){
+					result[(i-1)/2]["time"] = reply[i];
+				} else {
+					result[i/2]["userId"] = reply[i];
+				}
+			}
+			callback(true,err,result);
 		} else {
 			callback(false,err,reply);
 		}
