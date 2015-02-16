@@ -1441,14 +1441,14 @@ function getSolicitList(fields,callback){
 
 	redisClient.ZRANGEBYSCORE(fields.kind+":"+fields.userId+":solicit","-inf","+inf","WITHSCORES",function(err,reply){
 		if(!err){
-			var result=[],times=0;
+			var result=[],times=0,len=reply.length-1;
 			for(var i=reply.length-1;i>-1;i=i-2){
 				result[(i-1)/2] = {};
 				result[(i-1)/2]["time"] = reply[i];
 				result[(i-1)/2]["userId"] = reply[i-1];
 				getInfoByUserId(reply[i-1],function(state,err,reply){
 					times++;
-					if(times === (reply.length-1)/2){
+					if(times === len/2){
 						callback(true,err,result);
 					}
 				});
