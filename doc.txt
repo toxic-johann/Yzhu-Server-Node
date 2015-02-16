@@ -40,6 +40,6 @@ friendId(phone)
 out:
 state
 
-/api/relation/solicilist
+/api/relation/solicitlist
 out:
 list

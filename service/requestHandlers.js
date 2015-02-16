@@ -798,6 +798,36 @@ function addFriendByPhonePost(request,response,pathname){
 	return ("Post handler 'add friend by phone' was called");
 }
 
+function addContactByPhonePost(request,response,pathname){
+	var form = new formidable.IncomingForm();
+
+	form.parse(request,function (err,fields,files) {
+		// reflect to front
+		fields = checkAPI(pathname,fields);
+		fields.kind = "Contact";
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
+			if(state){
+				fields.userId = reply;
+				console.log(fields);
+				databaseHandlers.getIdByPhone(fields.friendId,function(state,err,reply){
+					if(state){
+						fields.friendId = reply;
+						friend.add(response,fields);
+					} else {
+						response.writeHead(200,{"content-type":"application/json"});
+						response.end(JSON.stringify({state:state,err:err}));
+					}
+				});
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
+			}
+		});	
+	});
+	return ("Post handler 'add contact by phone' was called");
+}
+}
+
 //income
 //friendId,userId(session)
 function confirmFriendPost(request,response,pathname){
@@ -834,14 +864,14 @@ function removeFriendPost(request,response,pathname){
 		fields.relation = "friend";
 		friend.remove(response,fields);
 	});
-	return ("Post handler 'confirm friend' was called");
+	return ("Post handler 'remove friend' was called");
 }
 
 
 //outcome
 //friend List
 function friendListPost(request,response,pathname){
-	var fields;
+	var fields={};
 	databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 		if(state){
 			fields.userId = reply;
@@ -861,7 +891,7 @@ function friendListPost(request,response,pathname){
 //outcome
 //solicit List
 function solicitListPost(request,response,pathname){
-	var fields;
+	var fields={};
 	databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 		if(state){
 			fields.userId = reply;
@@ -1098,6 +1128,7 @@ exports.askQuestionPost = askQuestionPost;
 
 exports.addFriendByUserIdPost = addFriendByUserIdPost;
 exports.addFriendByPhonePost = addFriendByPhonePost;
+exports.addContactByPhonePost = addContactByPhonePost;
 exports.confirmFriendPost = confirmFriendPost;
 exports.removeFriendPost = removeFriendPost;
 exports.solicitListPost = solicitListPost;
