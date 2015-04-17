@@ -8,22 +8,72 @@ var apiHandlers = require("./service/apiHandlers");
 var handle = {
 	"/":requestHandlers.start,
 	"/register":requestHandlers.register,
-	"/login":requestHandlers.login,
 	"/start":requestHandlers.start,
 	"/upload":requestHandlers.upload,
-	"/lib":requestHandlers.lib,
+	
 	"/client":requestHandlers.client,
 	"/image":requestHandlers.image,
 	"/db-test":requestHandlers.dbTest,
-
+	"lib":requestHandlers.lib,
+	"web":{
+		"auth":{
+			"register":requestHandlers.register,
+			'login':requestHandlers.login
+		},
+		"message":{
+			"sendhelp":requestHandlers.sendHelp,
+			"receive":requestHandlers.myReceive,
+			"help":requestHandlers.theHelp
+		},
+		"discover":{
+			"setposition":requestHandlers.setPosition,
+			"finduser":requestHandlers.findUserInArea,
+			"findmessage":requestHandlers.findMessageInArea
+		},
+		"test":{
+			"yzhu-test":requestHandlers.yzhuTest
+		},
+	},
 	"forPost":{
 		'/image':requestHandlers.imagePost,
 		'/upload':requestHandlers.uploadPost,
-		'/login':requestHandlers.loginPost,
+		"web":{
+			"auth":{
+				'login':requestHandlers.loginPost,
+				'register':requestHandlers.registerPost
+			},
+			"relation":{
+				"addfriend":requestHandlers.addFriendByUserIdPost,
+				"addfriendbyphone":requestHandlers.addFriendByPhonePost,
+				"confirmfriend":requestHandlers.confirmFriendPost,
+				"friendlist":requestHandlers.friendListPost,
+				"solicitlist":requestHandlers.solicitListPost
+			},
+			"discover":{
+				"setposition":requestHandlers.setPositionPost,
+				"finduser":requestHandlers.findUserInAreaPost,
+				"findmessage":requestHandlers.findMessageInAreaPost,
+			},
+			"message":{
+				"sendhelp":requestHandlers.sendHelpPost,
+				"receive":requestHandlers.myReceivePost,//the message push to me
+				"helpinfo":requestHandlers.helpInfoPost,
+				"askquestion":requestHandlers.askQuestionPost
+			},
+			"group":{
+				"accept":requestHandlers.acceptGroupPost,
+				"wait":requestHandlers.waitGroupPost,
+				"accepthelp":requestHandlers.acceptHelpPost,
+				"offerhelp":requestHandlers.offerHelpPost,
+				"refusetohelp":requestHandlers.refuseToHelpPost,
+				"ignorehelp":requestHandlers.ignoreHelpPost
+			},
+			"test":{
+				"yzhu-test":requestHandlers.yzhuTest
+			},
+		},
 		'/logout':requestHandlers.logoutPost,
-		'/register':requestHandlers.registerPost
 	},
-
 	"api":{
 		"forPost":{
 			"auth":{
@@ -39,9 +89,7 @@ var handle = {
 			},
 			"message":{
 				"sendhelp":requestHandlers.sendHelpPost,
-				"offerhelp":requestHandlers.offerHelpPost,
 				"receive":requestHandlers.myReceivePost,//the message push to me
-				"refusetohelp":requestHandlers.refuseToHelpPost,
 				"helpinfo":requestHandlers.helpInfoPost,
 				"askquestion":requestHandlers.askQuestionPost
 			},
@@ -49,6 +97,8 @@ var handle = {
 				"accept":requestHandlers.acceptGroupPost,
 				"wait":requestHandlers.waitGroupPost,
 				"accepthelp":requestHandlers.acceptHelpPost,
+				"offerhelp":requestHandlers.offerHelpPost,
+				"refusetohelp":requestHandlers.refuseToHelpPost,
 				"ignorehelp":requestHandlers.ignoreHelpPost
 			},
 			"user":{
@@ -64,7 +114,7 @@ var handle = {
 				"isfriend":requestHandlers.isFriendPost,
 				"addcontact":requestHandlers.addContactByUserIdPost,
 				"addContactByPhone":requestHandlers.addContactByPhone,
-				"confirmcontact":requestHandlers.confrimContactPost,
+				"confirmcontact":requestHandlers.confrimContactPost,	
 				"removecontact":requestHandlers.removeContactPost,
 				"iscontact":requestHandlers.isContactPost,
 				"solicitlist":requestHandlers.solicitListPost
@@ -79,8 +129,6 @@ var handle = {
 			"sendhelp":requestHandlers.sendHelp,
 			"receive":requestHandlers.myReceive,
 			"help":requestHandlers.theHelp
-		},
-		"relation":{
 		}
 	}
 };

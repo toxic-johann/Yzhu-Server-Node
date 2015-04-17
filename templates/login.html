@@ -6,7 +6,7 @@
 </head>
 <body>
 	<form action="/login" method="post">
-		<input type="text" name="cellPhone" value='1234'>
+		<input type="text" name="cellPhone" value='12345678901'>
 		<input type="password" name="password" value='1234'>
 		<input type="button" value="login">
 	</form>
@@ -19,17 +19,17 @@
 		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
 		onReady = function (e) {
 			if(this.readyState==4 && this.status==200 ){
-				var state;
-				switch(xmlhttp.responseText){
-					case "0":state = "success";break;
-					case "1":state = "phone has not been registered";break;
-					case "2":state = "password is wrong";break;
-				}
+				console.log(xmlhttp.responseText);
+				var response = JSON.parse(xmlhttp.responseText);
 				document.getElementById("state").innerHTML = state;
+				if(response.state === true){
+					console.log(response);
+					location.href = '/web/test/yzhu-test';
+				}
 			}
 		};
 
-		xmlhttp.open("POST","/login",true);
+		xmlhttp.open("POST","/web/auth/login",true);
         data = new FormData(document.getElementsByTagName("form")[0]);
         xmlhttp.send(data);
         xmlhttp.addEventListener('readystatechange', onReady, false);

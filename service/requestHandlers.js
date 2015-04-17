@@ -119,7 +119,6 @@ function lib (request,response,pathname) {
 	pathname.replace(/../g,"");
 	var realPath = [".",pathname];
 	realPath = realPath.join("");
-	console.log(realPath);
 
 	fileSendHandle(realPath,request,response);
 	return("Request handler 'lib' was called");
@@ -148,6 +147,15 @@ function dbTest(request,response,pathname){
 	});
 
 	return("Request handler 'db-test' was called");
+}
+
+function yzhuTest(request,response,pathname){
+	//test the yzhu-test
+	response.writeHead(200,{"Content-Type":"text/html"});
+	response.write(swig.renderFile('./templates/test.html'));
+	response.end();
+
+	return("Request handler 'yzhu-test' was called");
 }
 
 /*
@@ -427,7 +435,7 @@ function findMessageInAreaPost (request,response,pathname) {
 	var form = new formidable.IncomingForm();
 
 	form.parse(request,function (err,fields,files) {
-		databaseHandlers.getMessageByLocation(fields,function(state,error_code,result){
+		databaseHandlers.getHelpByLocation(fields,function(state,error_code,result){
 			if(!state){
 				console.log(error_code);
 				response.writeHead(200, {'content-type': 'application/json'});
@@ -490,17 +498,31 @@ function sendHelpPost (request,response,pathname) {
 
 	form.parse(request,function (err,fields,files) {
 		// reflect to front
-		console.log(fields);
-		databaseHandlers.sendHelp(fields,function (state,err,reply) {
-			if(state){
-				sendHelp(request,response,pathname);
-				databaseHandlers.getFollowerSet(fields.userId,function(state,err,reply){
+		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
+			if(!err){
+				fields.userId = reply;
+				console.log(fields);
+				databaseHandlers.sendHelp(fields,function (state,err,reply) {
 					if(state){
-						pushHandlers.pushNotification(fields.userId+" ask you for help!!",reply);
+						databaseHandlers.getFollowerSet(fields.userId,function(state,err,reply){
+							if(state){
+								pushHandlers.pushNotification({
+									"alert":fields.userId+" ask you for help!!",
+									"alias":fields.friendId,
+									"extras":{"time":new Date().getTime(),"userId":fields.userId}
+								});
+								response.writeHead(200, {'content-type': 'text/plain'});
+								response.end("ok");
+							}
+						});
 					}
 				});
+			} else {
+				response.writeHead(200,{"content-type":"application/json"});
+				response.end(JSON.stringify({state:state,err:err}));
 			}
 		});
+		
 	});
 	return ("Post handler 'send help' was called");
 }
@@ -518,9 +540,17 @@ function offerHelpPost (request,response,pathname) {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end(reply.toString());	
 				if(reply === 1){
-					pushHandlers.pushNotification(fields.userId+" decide to help you.",fields.caller);
+					pushHandlers.pushNotification({
+						"alert":fields.userId+" decide to help you.",
+						"alias":fields.caller,
+						"extras":{"time":new Date().getTime(),"userId":fields.userId}
+					});
 				} else if(reply === 1){
-					pushHandlers.pushNotification(fields.userId+" want to help you,would you accept?",fields.caller);
+					pushHandlers.pushNotification({
+						"alert":fields.userId+" want to help you,would you accept?",
+						"alias":fields.caller,
+						"extras":{"time":new Date().getTime(),"userId":fields.userId}
+					});
 				}
 				
 			} else {
@@ -543,7 +573,11 @@ function refuseToHelpPost(request,response,pathname){
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("1");	
-				pushHandlers.pushNotification(fields.userId+" is sorry that he can't help you.",fields.caller);
+				pushHandlers.pushNotification({
+					"alert":fields.userId+" want to help you,would you accept?",
+					"alias":fields.caller,
+					"extras":{"time":new Date().getTime(),"userId":fields.userId}
+				});
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -563,7 +597,11 @@ function acceptHelpPost (request,response,pathname){
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("1");	
-				pushHandlers.pushNotification(fields.caller+" accept your help.",fields.userId);
+				pushHandlers.pushNotification({
+					"alert":fields.userId+" accept your help.",
+					"alias":fields.caller,
+					"extras":{"time":new Date().getTime(),"userId":fields.userId}
+				});
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -583,7 +621,11 @@ function ignoreHelpPost (request,response,pathname){
 			if(state){
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("1");
-				pushHandlers.pushNotification(fields.caller+" thanks for your kindness,but he can solve the problem now.",fields.userId);	
+				pushHandlers.pushNotification({
+					"alert":fields.caller+" thanks for your kindness,but he can solve the problem now.",
+					"alias":fields.userId,
+					"extras":{"time":new Date().getTime(),"userId":fields.userId}
+				});
 			} else {
 				response.writeHead(200, {'content-type': 'text/plain'});
 				response.end("0");	
@@ -777,6 +819,7 @@ function addFriendByPhonePost(request,response,pathname){
 		fields = checkAPI(pathname,fields);
 		fields.kind = "Friend";
 		databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
+			console.log("the sessionId-->"+request.session.sessionId);
 			if(state){
 				fields.userId = reply;
 				console.log(fields);
@@ -874,6 +917,7 @@ function friendListPost(request,response,pathname){
 	databaseHandlers.getIdBySession(request.session.sessionId,function(state,err,reply){
 		if(state){
 			fields.userId = reply;
+			fields.kind = "Friend";
 			console.log(fields);
 			databaseHandlers.getFriendList(fields,function(state,err,reply){
 				response.writeHead(200,{"content-type":"application/json"});
@@ -1136,3 +1180,4 @@ exports.isFriendPost = isFriendPost;
 
 
 exports.dbTest = dbTest;
+exports.yzhuTest = yzhuTest;

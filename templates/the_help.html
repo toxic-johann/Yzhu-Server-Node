@@ -74,7 +74,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/message/HelpInfo",true);
+		xmlhttp.open("POST","/web/message/HelpInfo",true);
         var data ={
         	messageId:Info.messageId
         },
@@ -103,7 +103,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/group/accept",true);
+		xmlhttp.open("POST","/web/group/accept",true);
         var data ={
         	messageId:Info.messageId
         },
@@ -139,11 +139,11 @@
 						Info.EventUtil.addHandler(btns.getElementsByTagName("input")[0],'click',function(){acceptHelp(result.user[j],btns,j)});
 						Info.EventUtil.addHandler(btns.getElementsByTagName("input")[1],'click',function(){ignoreHelp(result.user[j],btns,j)});
 					})(i);
-				}
+				}//how to bind function with arguments in wrox.js
 			}
 		};
 
-		xmlhttp.open("POST","/api/group/wait",true);
+		xmlhttp.open("POST","/web/group/wait",true);
         var data ={
         	messageId:Info.messageId
         },
@@ -167,7 +167,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/group/acceptHelp",true);
+		xmlhttp.open("POST","/web/group/acceptHelp",true);
         var data ={
         	messageId:Info.messageId,
         	userId:userId,
@@ -189,7 +189,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/group/ignoreHelp",true);
+		xmlhttp.open("POST","/web/group/ignoreHelp",true);
         var data ={
         	messageId:Info.messageId,
         	userId:userId,

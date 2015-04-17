@@ -25,7 +25,7 @@
 					tempText.push('<ul>')
 					for(var i=0;i<len;i++){
 						tempText.push('<li>');
-						tempText.push('<a href="/api/message/help/'+result.messages[i].messageId+'">'+result.messages[i].content+"</a>");
+						tempText.push('<a href="/web/message/help/'+result.messages[i].messageId+'">'+result.messages[i].content+"</a>");
 						tempText.push(result.messages[i].time);
 						if(result.messages[i].state === '0'){
 							switch(result.messages[i].UMState){
@@ -72,7 +72,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/message/receive",true);
+		xmlhttp.open("POST","/web/message/receive",true);
         var data ={
         	userId:12345678900,
         	start:0,
@@ -99,7 +99,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/message/offerHelp",true);
+		xmlhttp.open("POST","/web/group/offerHelp",true);
         var data ={
         	userId:12345678900,
         	messageId:result.messages[i].messageId,
@@ -121,7 +121,7 @@
 			}
 		};
 
-		xmlhttp.open("POST","/api/message/RefuseToHelp",true);
+		xmlhttp.open("POST","/web/group/RefuseToHelp",true);
         var data ={
         	userId:12345678900,
         	messageId:result.messages[i].messageId,

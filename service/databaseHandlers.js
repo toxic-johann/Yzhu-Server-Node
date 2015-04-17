@@ -200,10 +200,6 @@ function sendHelp (fields,callback) {
 	fields.time = new Date().getTime();
 	fields.state = 0;//indicate no help accept
 
-	getIdByPhone(fields.userId,function (state,err,reply) {
-		// body...
-		//use for test so do nor tab
-		fields.userId = reply;
 	redisClient.HMSET("Message:help:"+mhid,fields,function (err,reply) {
 		if(reply === "OK"){
 			//key do not exist
@@ -221,9 +217,9 @@ function sendHelp (fields,callback) {
 					receiveMessage(reply[i],mhid,fields.time);
 				}
 				redisClient.ZADD("Timeline:help:"+mhid,fields.time,JSON.stringify({
-				userId:fields.userId,
-				behavior:"invite someone to help him."
-			}));
+					userId:fields.userId,
+					behavior:"invite someone to help him."
+				}));
 			});
 			setMessagePosition(fields,mhid);
 			callback(true);
@@ -231,7 +227,6 @@ function sendHelp (fields,callback) {
 			console.log("this is reply --> "+reply.toString());
 			callback(false);
 		}
-	});
 	});
 }
 
@@ -484,13 +479,13 @@ function getReceiverSet (fields,check,callback) {
 
 	getUserNearbySet(fields,check,function (state,err,reply){
 		if(state){
-			redisClient.SUNION("Relation:follow:"+fields.userId,"Position:temp:nearby:"+check,function (err,reply) {
+			redisClient.SUNION("Friend:"+fields.userId+":friend","Position:temp:nearby:"+check,function (err,reply) {
 				callback(true,0,reply);
 				redisClient.DEL("Position:temp:nearby:"+check);
 				console.log(reply);
 			});
 		} else {
-			redisClient.SMEMBERS("Relation:follow:"+fields.userId,function (err,reply) {
+			redisClient.SMEMBERS("Friend:"+fields.userId+":friend",function (err,reply) {
 				callback(true,0,reply);
 				console.log(reply);
 			});
@@ -527,6 +522,7 @@ function getUserNearbySet (fields,check,callback) {
     						//get the inter uid
     						redisClient.SINTER("Position:temp:longitude:"+check,"Position:temp:latitude:"+check,function (err,reply) {
     							//clean the temp set
+    							console.log(reply);
     							redisClient.DEL("Position:temp:longitude:"+check);
     							redisClient.DEL("Position:temp:latitude:"+check);
     							redisClient.SADD("Position:temp:nearby:"+check,reply,function (err,reply) {
@@ -674,7 +670,7 @@ function setMessagePosition (fields,messageId,callback) {
 //cellPhone
 //------------
 //outcome
-//password
+//state
 function loginUser (fields,callback) {
 	callback = callback || function () {
 		// nothing
@@ -947,7 +943,7 @@ function getHelpByLocation (fields,callback) {
 	}
 
 	fields.check=new Date().getTime().toString(16) + Math.floor(Math.random()*1e16).toString(16);
-	fields.kind = help;
+	fields.kind = 'help';
 	var toGet = function(state,error_code,result){
 		if(state){
 			redisClient.SUNIONSTORE("Message:temp:"+fields.check,"Live:message:temp:help:"+fields.check,"Position:message:temp:help:"+fields.check,function (err,reply){
@@ -1449,13 +1445,14 @@ function getSolicitList(fields,callback){
 				(function (j){
 					getInfoByUserId(reply[j-1],function(state,err,reply){
 						times++;
-						result[(j-1)/2]["info"] = reply; 
+						result[(j-1)/2]["info"] = reply;
 						if(times === (len+1)/2){
 							callback(true,err,result);
 						}
 					});
 				})(i);
 			}
+			callback(false,null,result);
 		} else {
 			callback(false,err,reply);
 		}
@@ -1477,7 +1474,21 @@ function getFriendList(fields,callback){
 
 	redisClient.SMEMBERS(fields.kind+":"+fields.userId+":friend",function(err,reply){
 		if(!err){
-			callback(true,err,reply);
+			var result=[],times=0,len=reply.length-1;
+			for(var i=len;i>-1;i--){
+				result[i]={};
+				result[i]["userId"]=reply[i];
+				(function (j){
+					getInfoByUserId(reply[j],function(state,err,reply){
+						times++;
+						result[j] += reply;
+						if(times === len-1) {
+							callback(true,err,result);
+						}
+					});
+				})(i);
+			}
+			callback(false,null,result);
 		} else {
 			callback(false,err,reply);
 		}

@@ -65,7 +65,7 @@ exports.sessionHandler = function (cookieName,maxAge,checkInterval) {
 				console.log('ok');
 			}
 		});
-		response.setHeader('Set-Cookie',[cookieName +'='+ session +';Max-Age='+ maxAge/1000]);
+		response.setHeader('Set-Cookie',[cookieName +'='+ session +';Max-Age='+ maxAge/1000+";path=/"]);
 		return sessions[session] = session;
 	}
 

@@ -1,8 +1,128 @@
-<h1>{{ pagename|title }}</h1>
-<ul>
-{% for author in authors %}
-  <li{% if loop.first %} class="first"{% endif %}>
-    {{ author }}
-  </li>
-{% endfor %}
-</ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>test yzhu service</title>
+</head>
+<body>
+	<h1>Yzhu test</h1>
+	<ul>
+		<li><input type="text" value="12345678900" id="friend-phone"></li>
+		<li><input type="button" value="add-friend-by-phone" id="addfriendbyphone"></li>
+		<li><input type="button" value="solicit-list" id="getsolicitlist"></li>
+		<li><input type="button" value="friend-list" id="getfriendlist"></li>
+	</ul>
+</body>
+<script type="text/javascript" src="/lib/wrox.js"></script>
+<script type="text/javascript">
+	function addFriendByPhone(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		formData = new FormData(),
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				console.log("ok");
+				console.log(xmlhttp.responseText);
+			}
+		};
+
+		xmlhttp.open("POST","/web/relation/addFriendByPhone",true);
+        formData.append("friendId",document.getElementById("friend-phone").value);
+        xmlhttp.send(formData);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function getSolicitList(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		position = document.getElementById("getsolicitlist");
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				console.log("ok");
+				console.log(xmlhttp.responseText);
+				var response = JSON.parse(xmlhttp.responseText),temp,
+				len = response.list.length
+				area = document.createElement("ul");
+				area.id = "solicitlist";
+				if(len){
+					if(document.getElementById("solicitlist")){
+						position.parentNode.removeChild(document.getElementById("solicitlist"));
+					}
+					position.parentNode.insertBefore(area,null);
+					for(var i=len-1;i>-1;i--){
+						area = document.createElement("li");
+						area.innerHTML=response.list[i].userId;
+						position.parentNode.childNodes[1].insertBefore(area,null);
+						area = document.createElement("input");
+						area.value = "confirm";
+						area.type = "button";
+						area.className = "confirmfriend";//use className to define className
+						position.parentNode.childNodes[1].childNodes[len-i-1].insertBefore(area,null);
+						(function (j){
+							console.log(j);
+							btns = position.parentNode.childNodes[1].childNodes[j].childNodes[1];
+							console.log(btns);
+							Wrox.ProJS.EventUtil.addHandler(btns,'click',function(){confirmFriend(j)});
+						})(len-i-1);
+					}
+				}
+			}
+		};
+
+		xmlhttp.open("POST","/web/relation/solicitList",true);
+        xmlhttp.send();
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function getFriendList(){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		position = document.getElementById("getfriendlist");
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				console.log("ok");
+				console.log(xmlhttp.responseText);
+				var response = JSON.parse(xmlhttp.responseText),temp,
+				len = response.list.length;
+				console.log(len);
+				area = document.createElement("ul");
+				area.id = "friendlist";
+				if(len){
+					if(document.getElementById("friendlist")){
+						position.parentNode.removeChild(document.getElementById("friendlist"));
+					}
+					position.parentNode.insertBefore(area,null);
+					for(var i=len-1;i>-1;i--){
+						area = document.createElement("li");
+						area.innerHTML=response.list[i].userId;
+						position.parentNode.childNodes[1].insertBefore(area,null);
+					}
+				}
+			}
+		};
+
+		xmlhttp.open("POST","/web/relation/friendList",true);
+        xmlhttp.send();
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	function confirmFriend(i){
+		var xmlhttp = Wrox.ProJS.AjaxUtil.createXHR(),
+		formData = new FormData(),
+		position = document.getElementById("solicitlist");
+		onReady = function (e) {
+			if(this.readyState==4 && this.status==200 ){
+				console.log("ok");
+				console.log(xmlhttp.responseText);
+			}
+		};
+		xmlhttp.open("POST","/web/relation/confirmFriend",true);
+		formData.append("friendId",position.childNodes[i].childNodes[0].nodeValue);//text node
+        xmlhttp.send(formData);
+        xmlhttp.addEventListener('readystatechange', onReady, false);
+	}
+
+	window.onload=function(){
+		Wrox.ProJS.EventUtil.addHandler(document.getElementById("addfriendbyphone"),"click",addFriendByPhone);
+		Wrox.ProJS.EventUtil.addHandler(document.getElementById("getsolicitlist"),"click",getSolicitList);
+		Wrox.ProJS.EventUtil.addHandler(document.getElementById("getfriendlist"),"click",getFriendList);	
+	}
+</script>
+</html>
