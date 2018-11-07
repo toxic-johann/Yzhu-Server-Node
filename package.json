@@ -2,7 +2,7 @@
   "dependencies": {
     "primus": "",
     "swig": "^1.4.2",
-    "ws": "^0.6.3",
+    "ws": "^6.1.0",
     "formidable":"",
     "mongoose":"",
     "sockjs":"",
